@@ -32,6 +32,7 @@ public class PlayerAttack : MonoBehaviour
     }
 
     void Attack() {
+        Debug.Log("Attack triggered");
         // Trigger the attack animation
         animator.SetTrigger("attack");
         
@@ -39,20 +40,11 @@ public class PlayerAttack : MonoBehaviour
         Debug.Log("Current rotation: " + transform.rotation.eulerAngles.z);
         
         // Get the direction based on the player's current rotation
-        Vector2 direction;
-        float zRotation = transform.rotation.eulerAngles.z;
-        
-        if (Mathf.Approximately(zRotation, 0f)) { // Facing down
-            direction = Vector2.down;
-        } else if (Mathf.Approximately(zRotation, 180f)) { // Facing up
-            direction = Vector2.up;
-        } else if (Mathf.Approximately(zRotation, 90f)) { // Facing right
-            direction = Vector2.right;
-        } else if (Mathf.Approximately(zRotation, 270f)) { // Facing left
-            direction = Vector2.left;
-        } else {
-            direction = Vector2.down; // Default fallback
-        }
+        Vector2 direction = transform.up * -1f; // Invert the direction to match the player's rotation
+        // Debug the direction
+        Debug.Log("Attack direction: " + direction);
+        Debug.Log("Attack point position: " + attackPoint.position);
+
         
         rays[0].transform.position = attackPoint.position;
         rays[0].GetComponent<Projectile>().SetDirection(direction);
@@ -65,5 +57,13 @@ public class PlayerAttack : MonoBehaviour
         // Wait for the specified delay
         yield return new WaitForSeconds(delay);
         // Perform the attack logic here (e.g., check for enemies in range)
+    }
+    void OnDrawGizmos()
+    {
+        if (attackPoint != null)
+        {
+            Gizmos.color = Color.red;
+            Gizmos.DrawRay(attackPoint.position, transform.up * 1.5f); // Adjust direction as needed
+        }
     }
 }

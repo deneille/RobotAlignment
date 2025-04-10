@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class MovingRobotDirection : MonoBehaviour
+public class PlayerDirection : MonoBehaviour
 {
     void Update()
     {

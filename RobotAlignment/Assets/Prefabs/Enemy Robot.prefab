@@ -15,7 +15,6 @@ GameObject:
   - component: {fileID: 7065704769850448237}
   - component: {fileID: 6833908419470092975}
   - component: {fileID: 7623626167310997648}
-  - component: {fileID: 2226560366735396105}
   m_Layer: 8
   m_Name: Enemy Robot
   m_TagString: Untagged
@@ -173,15 +172,3 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
---- !u!114 &2226560366735396105
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5558824951595616482}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e4d57a23d035d8d4ea87124b581be19c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
