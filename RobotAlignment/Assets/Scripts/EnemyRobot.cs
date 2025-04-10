@@ -1,12 +1,21 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using TMPro; // Assuming you are using TextMeshPro for UI text
+using UnityEngine.UI; // Assuming you are using Unity's UI system for images
 
 public class EnemyRobot : MonoBehaviour, IInteractable
 {
     public bool isEnemy {get; set; } // Flag to indicate if the object is an enemy
     public string enemyId {get; set; } // Unique ID for the enemy
+
+    public CorruptedRobotDialogue enemyRobotDialogue; // Dialogue for the robot
+    public GameObject enemyRobotPrefab; // Prefab for the enemy robot
+    public TMP_Text dialogueText, enemyName; // Text component for displaying dialogue
     public Sprite fixedRobotSprite; // Fixed sprite for the robot
+
+    private int dialogueIndex; // Index for the current dialogue line
+    private bool isTyping, isDialogueActive; // Flag to check if dialogue is active
     private enum State{
         Idle,
         Move,
@@ -27,20 +36,78 @@ public class EnemyRobot : MonoBehaviour, IInteractable
         // StartCoroutine(IdlingRoutine());
     }
     public void Interact(){
-        if(!CanInteract()){
-            Debug.Log("Cannot interact with this object");
+        // if(!CanInteract()){
+        //     Debug.Log("Cannot interact with this object");
+        //     return;
+        // }
+        
+        // Debug.Log($"Challenging {enemyId} to a duel!");
+        // ChallengeEnemy();
+        if(enemyRobotDialogue == null || isDialogueActive){
+            
+            Debug.Log("Dialogue is either null or currently active, cannot interact.");
             return;
         }
-        
-        Debug.Log($"Challenging {enemyId} to a duel!");
-        ChallengeEnemy();
+        else if(isDialogueActive){
+            NextDialogue();
+        }
+        else{
+            StartDialogue(); // Start the dialogue if it's not already active
+            Debug.Log($"Starting dialogue with {enemyId}");
+        }
+    }
+    void StartDialogue(){
+        isDialogueActive = true; // Set the dialogue state to active
+        dialogueIndex = 0; // Reset the dialogue index
+        enemyName.text = enemyRobotDialogue.robotName; // Set the robot name in the UI
+        enemyRobotPrefab.SetActive(true); // Activate the robot prefab
+        //need to pause game
+
+        StartCoroutine(TypeDialogue()); // Start typing the dialogue
+    }
+    IEnumerator TypeDialogue(){
+        isTyping = true;
+        dialogueText.text = ""; // Clear the text
+        foreach(char letter in enemyRobotDialogue.dialogueLines[dialogueIndex].ToCharArray()){
+            dialogueText.text += letter;
+            yield return new WaitForSeconds(enemyRobotDialogue.typingSpeed); // Wait for the typing speed  
+        }
+        isTyping = false;
+
+        if(enemyRobotDialogue.autoProgressLines[dialogueIndex] && enemyRobotDialogue.autoProgressLines.Length > dialogueIndex){
+            // If the current line is set to auto-progress, wait for the delay
+            yield return new WaitForSeconds(enemyRobotDialogue.autoProgressDelay); // Wait for the auto-progress delay
+            NextDialogue(); // Move to the next dialogue line
+        }
+    }
+    public void NextDialogue(){
+        if(isTyping){
+            StopAllCoroutines(); // Stop typing if the player clicks
+            dialogueText.text = enemyRobotDialogue.dialogueLines[dialogueIndex]; // Show the full text immediately
+            isTyping = false;
+        }
+        if(dialogueIndex < enemyRobotDialogue.dialogueLines.Length - 1){
+            dialogueIndex++; // Move to the next dialogue line
+            StartCoroutine(TypeDialogue()); // Start typing the next line
+        } else {
+            EndDialogue(); // End the dialogue if there are no more lines
+        }
+    }
+    public void EndDialogue(){
+        StopAllCoroutines(); // Stop all coroutines
+        isDialogueActive = false; // Set the dialogue state to inactive
+        enemyRobotPrefab.SetActive(false); // Deactivate the robot prefab
+        dialogueText.text = ""; // Clear the text
+        enemyName.text = ""; // Clear the name text
+        //Need to unpaise the game.
+        Debug.Log("Dialogue ended");
     }
 
     public bool CanInteract(){
         if(isEnemy == true){
             Debug.Log("Object is an enemy");
         }
-        return isEnemy; // Check if the object is an enemy
+        return isEnemy && !isDialogueActive; // Check if the object is an enemy
     }
 
     private void ChallengeEnemy()
