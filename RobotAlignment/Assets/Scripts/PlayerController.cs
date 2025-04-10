@@ -2,6 +2,8 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem; // Import the Input System namespace
+using UnityEngine.InputSystem.Interactions; // Import the Interactions namespace
 
 
 public class PlayerController : MonoBehaviour
@@ -14,6 +16,8 @@ public class PlayerController : MonoBehaviour
     public LayerMask layerMask; // Layer mask for raycasting
     private RaycastHit2D hit; // Variable to store the raycast hit information
     // Start is called before the first frame update
+    InputActionReference moveAction; // Reference to the move action
+    InputActionReference interactAction; // Reference to the interact action
 
     void Awake(){
         // Get the Animator component attached to the player
@@ -25,7 +29,7 @@ public class PlayerController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if(!isMoving)
+                if(!isMoving)
         {
             // Get the input from the player
             movement.x = Input.GetAxisRaw("Horizontal");
@@ -48,13 +52,17 @@ public class PlayerController : MonoBehaviour
                 targetPos.x += movement.x;
                 targetPos.y += movement.y;
                 if(isWalkable(targetPos)){
-                    StartCoroutine(Move(targetPos));
+                    StartCoroutine(MoveEn(targetPos));
                 }
             }
         }
         animator.SetBool("isMoving", isMoving);
     }
-    IEnumerator Move(Vector3 targetPos)
+
+    public void Move(InputAction.CallbackContext context){
+        movement = context.ReadValue<Vector2>(); // Get the movement input from the action
+    }
+    IEnumerator MoveEn(Vector3 targetPos)
     {
         isMoving = true; // Set the moving flag to true
         while((targetPos - transform.position).sqrMagnitude > Mathf.Epsilon)
@@ -76,6 +84,14 @@ public class PlayerController : MonoBehaviour
     }
     public bool canAttack(){
         return !isMoving;
+    }
+
+    public void OnInteractInput(InputAction.CallbackContext context)
+    {
+        if (context.performed)
+        {
+            Debug.Log("Player controller detected Interact input (E key)");
+        }
     }
 
 }
