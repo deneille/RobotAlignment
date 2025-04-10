@@ -14,10 +14,7 @@ public class PlayerController : MonoBehaviour
     public LayerMask layerMask; // Layer mask for raycasting
     private RaycastHit2D hit; // Variable to store the raycast hit information
     // Start is called before the first frame update
-    void Start()
-    {
-        
-    }
+
     void Awake(){
         // Get the Animator component attached to the player
         animator = GetComponent<Animator>();
@@ -76,6 +73,9 @@ public class PlayerController : MonoBehaviour
             return false;
         }
         return true;
+    }
+    public bool canAttack(){
+        return !isMoving;
     }
 
 }
