@@ -10,13 +10,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3657dd84429be5447b040afdbda1a897, type: 3}
-  m_Name: CorruptedRobotDialogue-01
+  m_Name: RobotDialogue
   m_EditorClassIdentifier: 
-  robotName: Robot-01
   dialogueLines:
-  - "\"[glitchy voice]... Error... Core\u2026 integrity compromised... Override sequence
-    required!\""
-  - '"You want to challenge me...?I''m not--I''m ready to defeat you"'
+  - 'Enemy: Are you ready to battle to the death?'
   typingSpeed: 0.05
-  autoProgressLines: 
-  autoProgressDelay: 2
+  autoProgressLines: 01
+  autoProgressDelay: 6

@@ -1,181 +1,365 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using TMPro; // Assuming you are using TextMeshPro for UI text
-using UnityEngine.UI; // Assuming you are using Unity's UI system for images
+using TMPro;
+using UnityEngine.UI;
 
 public class EnemyRobot : MonoBehaviour, IInteractable
 {
-    public bool isEnemy {get; set; } // Flag to indicate if the object is an enemy
-    public string enemyId {get; set; } // Unique ID for the enemy
+    public bool isEnemy { get; private set; }
+    public string enemyId;
+    public Sprite fixedRobotSprite;
 
-    public CorruptedRobotDialogue enemyRobotDialogue; // Dialogue for the robot
-    public GameObject enemyRobotPrefab; // Prefab for the enemy robot
-    public TMP_Text dialogueText, enemyName; // Text component for displaying dialogue
-    public Sprite fixedRobotSprite; // Fixed sprite for the robot
+    [Header("Dialogue")]
+    [SerializeField] private RobotDialogue robotDialogue; // Reference to dialogue scriptable object
+    private int currentDialogueIndex = 0;
+    private bool isInDialogue = false;
 
-    private int dialogueIndex; // Index for the current dialogue line
-    private bool isTyping, isDialogueActive; // Flag to check if dialogue is active
-    private enum State{
-        Idle,
-        Move,
-        Attack,
-    }
+    [Header("Quizzes")]
+    public TrueFalseQuiz trueFalseQuiz;
+    public YesNoQuiz yesNoQuiz;
+
+    [Header("Movement & Targeting")]
+    [SerializeField] private EnemyPathfinding pathfinder; // Reference to the pathfinding script
+
+    [SerializeField] private LayerMask targetLayerMask;
+
+    // For simplicity, we only use two states here.
+    private enum State { Idle, Move }
     private State currentState;
-    // private EnemyPathfinding pathfinding;
+
+    // Flag indicating whether the quiz has been completed.
+    private bool completedQuiz = false;
 
     private void Awake()
     {
-        // pathfinding = GetComponent<EnemyPathfinding>();
         currentState = State.Idle;
     }
+
     private void Start()
     {
-        enemyId ??= GlobalHelper.GetUniqueId(gameObject); // Set the enemy ID to the name of the GameObject
-        isEnemy = true; // Set the enemy state to true
-        // StartCoroutine(IdlingRoutine());
+        // Assign a unique ID if not already set.
+        if (string.IsNullOrEmpty(enemyId))
+            enemyId = GlobalHelper.GetUniqueId(gameObject);
+
+        isEnemy = true;
+        currentState = State.Idle;
+        // want to wait 20 seconds before switching states to move
+        StartCoroutine(WaitAndSwitchState(20f));
+
+        // (Optional) Start any movement/hostile behavior here.
+        StartCoroutine(RunAndDestroyTarget());
     }
-    public void Interact(){
-        // if(!CanInteract()){
-        //     Debug.Log("Cannot interact with this object");
-        //     return;
-        // }
-        
-        // Debug.Log($"Challenging {enemyId} to a duel!");
-        // ChallengeEnemy();
-        if(enemyRobotDialogue == null || isDialogueActive){
-            
-            Debug.Log("Dialogue is either null or currently active, cannot interact.");
+
+    private IEnumerator WaitAndSwitchState(float waitTime)
+    {
+        yield return new WaitForSeconds(waitTime);
+        currentState = State.Move;
+    }
+
+    // Called by your interaction system when the player interacts with this enemy.
+    public void Interact()
+    {
+        if (isInDialogue)
+        {
+            Debug.Log("Already in dialogue, cannot interact again.");
             return;
         }
-        else if(isDialogueActive){
-            NextDialogue();
+        if (!CanInteract())
+        {
+            Debug.Log("Cannot interact with this object.");
+            return;
         }
-        else{
-            StartDialogue(); // Start the dialogue if it's not already active
-            Debug.Log($"Starting dialogue with {enemyId}");
-        }
-    }
-    void StartDialogue(){
-        isDialogueActive = true; // Set the dialogue state to active
-        dialogueIndex = 0; // Reset the dialogue index
-        enemyName.text = enemyRobotDialogue.robotName; // Set the robot name in the UI
-        enemyRobotPrefab.SetActive(true); // Activate the robot prefab
-        //need to pause game
 
-        StartCoroutine(TypeDialogue()); // Start typing the dialogue
-    }
-    IEnumerator TypeDialogue(){
-        isTyping = true;
-        dialogueText.text = ""; // Clear the text
-        foreach(char letter in enemyRobotDialogue.dialogueLines[dialogueIndex].ToCharArray()){
-            dialogueText.text += letter;
-            yield return new WaitForSeconds(enemyRobotDialogue.typingSpeed); // Wait for the typing speed  
-        }
-        isTyping = false;
-
-        if(enemyRobotDialogue.autoProgressLines[dialogueIndex] && enemyRobotDialogue.autoProgressLines.Length > dialogueIndex){
-            // If the current line is set to auto-progress, wait for the delay
-            yield return new WaitForSeconds(enemyRobotDialogue.autoProgressDelay); // Wait for the auto-progress delay
-            NextDialogue(); // Move to the next dialogue line
-        }
-    }
-    public void NextDialogue(){
-        if(isTyping){
-            StopAllCoroutines(); // Stop typing if the player clicks
-            dialogueText.text = enemyRobotDialogue.dialogueLines[dialogueIndex]; // Show the full text immediately
-            isTyping = false;
-        }
-        if(dialogueIndex < enemyRobotDialogue.dialogueLines.Length - 1){
-            dialogueIndex++; // Move to the next dialogue line
-            StartCoroutine(TypeDialogue()); // Start typing the next line
-        } else {
-            EndDialogue(); // End the dialogue if there are no more lines
-        }
-    }
-    public void EndDialogue(){
-        StopAllCoroutines(); // Stop all coroutines
-        isDialogueActive = false; // Set the dialogue state to inactive
-        enemyRobotPrefab.SetActive(false); // Deactivate the robot prefab
-        dialogueText.text = ""; // Clear the text
-        enemyName.text = ""; // Clear the name text
-        //Need to unpaise the game.
-        Debug.Log("Dialogue ended");
+        Debug.Log($"Interacting with robot: {enemyId}");
+        GameManager.Instance.SavePlayerPosition(); // Save the player's position
+        Time.timeScale = 0f; // Pause the game
+        StartCoroutine(PlayDialogueSequence());
     }
 
-    public bool CanInteract(){
-        if(isEnemy == true){
-            Debug.Log("Object is an enemy");
-        }
-        return isEnemy && !isDialogueActive; // Check if the object is an enemy
-    }
+    // Determines if the enemy can currently be interacted with.
+    public bool CanInteract() => isEnemy && !completedQuiz;
 
-    private void ChallengeEnemy()
+    // Handles the dialogue sequence then starts the quiz.
+    private IEnumerator PlayDialogueSequence()
     {
-        // Logic to challenge the player to a duel
-        Debug.Log("Starting puzzle gameplay...");
-        
-        // Set isEnemy to false AFTER the interaction
-        SetIsEnemy(false);
-    }
+        if (robotDialogue == null || robotDialogue.dialogueLines.Length == 0)
+        {
+            Debug.LogWarning("No dialogue found for robot: " + enemyId);
+            DialogueManager.Instance.ShowDialogue($"Robot {enemyId} challenges you: 'Error... undefined directive...'");
+            yield return new WaitForSecondsRealtime(1f);
+            EndInteraction();
+            yield break;
+        }
 
-    public void SetIsEnemy(bool _isEnemy)
-    {
-        // Only update if the state is different (prevents recursion)
-        if(isEnemy != _isEnemy){
-            isEnemy = _isEnemy;
-            
-            if(!isEnemy) {
-                // When changing to non-enemy (fixed) state
-                GetComponent<SpriteRenderer>().sprite = fixedRobotSprite;
-                Debug.Log("Robot has been fixed and is no longer hostile");
-            } else {
-                // If you have an enemy sprite, you could set it here
-                // GetComponent<SpriteRenderer>().sprite = enemyRobotSprite;
-                Debug.Log("Robot is now hostile");
+        isInDialogue = true;
+        currentDialogueIndex = 0;
+
+        while (currentDialogueIndex < robotDialogue.dialogueLines.Length)
+        {
+            string currentLine = robotDialogue.dialogueLines[currentDialogueIndex];
+            // Display the current dialogue line.
+            DialogueManager.Instance.ShowDialogue(currentLine, robotDialogue.autoProgressDelay);
+
+            if (currentDialogueIndex < robotDialogue.autoProgressLines.Length &&
+                robotDialogue.autoProgressLines[currentDialogueIndex])
+            {
+                // Auto-progress after delay (using realtime because the game is paused)
+                yield return new WaitForSecondsRealtime(robotDialogue.autoProgressDelay);
+                currentDialogueIndex++;
+            }
+            else
+            {
+                // Wait until the player presses Space/Return/E to advance.
+                yield return new WaitUntil(() => Input.GetKeyDown(KeyCode.Space) ||
+                                                 Input.GetKeyDown(KeyCode.Return) ||
+                                                 Input.GetKeyDown(KeyCode.E));
+                yield return new WaitForEndOfFrame(); // small delay to prevent immediate progression.
+                currentDialogueIndex++;
             }
         }
-    }
-    private IEnumerator IdlingRoutine()
-    {
-        while (currentState == State.Idle)
+
+        isInDialogue = false;
+        DialogueManager.Instance.HideDialogue();
+
+        // --- Start the Quiz ---
+        // Make sure the quiz object is active before starting its coroutine.
+        if (trueFalseQuiz != null)
         {
-            Vector2 idlePosition = GetIdlePosition();
-            // pathfinding.MoveTo(idlePosition);
-            yield return new WaitForSeconds(2f);
+            if (!trueFalseQuiz.gameObject.activeInHierarchy)
+                trueFalseQuiz.gameObject.SetActive(true);
+
+            trueFalseQuiz.OnQuizResult += HandleQuizResult;
+            trueFalseQuiz.StartQuiz();
+        }
+        else if (yesNoQuiz != null)
+        {
+            if (!yesNoQuiz.gameObject.activeInHierarchy)
+                yesNoQuiz.gameObject.SetActive(true);
+
+            yesNoQuiz.OnQuizResult += HandleQuizResult;
+            yesNoQuiz.StartQuiz();
+        }
+
+        completedQuiz = true;
+        // EndInteraction();
+    }
+
+    // Called after dialogue (and quiz start) to unpause the game.
+    private void EndInteraction()
+    {
+        Debug.Log("Ending interaction with robot: " + enemyId);
+        GameManager.Instance.ResumeGameAfterQuiz();
+    }
+
+    private IEnumerator RunAndDestroyTarget()
+    {
+        while (true)
+        {
+            // If no obstacles remain, end the game.
+            GameObject[] remainingObstacles = GameObject.FindGameObjectsWithTag("Obstacle");
+            if (remainingObstacles.Length == 0)
+            {
+                Debug.Log("No obstacles remain. Ending game.");
+                EndGame();
+                yield break;
+            }
+
+            // Find the nearest obstacle using your filtering routine.
+            Collider2D targetCollider = FindClosestTarget();
+            if (targetCollider == null)
+            {
+                Debug.Log("No target object found in layer mask.");
+                yield return new WaitForSeconds(0.5f);
+                continue;
+            }
+
+            // Use the obstacle's transform as the starting target.
+            Vector2 targetPosition = targetCollider.transform.position;
+            Debug.Log($"Running towards target at {targetPosition}");
+            currentState = State.Move;
+            pathfinder.MoveTo(targetPosition);
+
+            // Timers and thresholds.
+            float maxWaitTime = 10f;
+            float elapsedTime = 0f;
+            float stuckTime = 0f;
+            float lastDistance = float.MaxValue;
+            float proximityThreshold = 1.0f; // "Close enough" threshold.
+            bool reached = false;
+
+            while (targetCollider != null && elapsedTime < maxWaitTime)
+            {
+                // Instead of comparing transform positions (which are grid-centered),
+                // we use the actual collider's geometry.
+                Vector2 closestPoint = targetCollider.ClosestPoint(transform.position);
+                float currentDistance = Vector2.Distance(transform.position, closestPoint);
+                Debug.Log($"Distance to target (closest point): {currentDistance}, Enemy pos: {transform.position}");
+
+                if (currentDistance <= proximityThreshold)
+                {
+                    reached = true;
+                    break;
+                }
+
+                // Check for progress; if little progress is made, increase the stuck timer.
+                if (Mathf.Abs(currentDistance - lastDistance) < 0.01f)
+                {
+                    stuckTime += Time.deltaTime;
+                }
+                else
+                {
+                    stuckTime = 0f;
+                    lastDistance = currentDistance;
+                }
+
+                // If stuck for over 5 seconds, change direction.
+                if (stuckTime > 5f)
+                {
+                    Debug.LogWarning("Enemy stuck for over 5 seconds. Changing direction...");
+                    // Instead of basing the new target off the obstacle,
+                    // use the enemy's current position plus a random offset.
+                    Vector2 randomOffset = Random.insideUnitCircle.normalized;
+                    float offsetDistance = 3.0f; // Adjust this to force a more pronounced turn.
+                    Vector2 newTargetPosition = (Vector2)transform.position + randomOffset * offsetDistance;
+                    Debug.Log($"New target position (relative to enemy): {newTargetPosition}");
+                    pathfinder.MoveTo(newTargetPosition);
+
+                    // Reset timers after changing direction.
+                    stuckTime = 0f;
+                    elapsedTime = 0f;
+                    lastDistance = currentDistance;
+                }
+
+                elapsedTime += Time.deltaTime;
+                yield return null;
+            }
+
+            // If within threshold, register a hit.
+            if (targetCollider != null && reached && targetCollider.CompareTag("Obstacle"))
+            {
+                FactoryInventory inventory = targetCollider.GetComponent<FactoryInventory>();
+                if (inventory != null)
+                {
+                    Debug.Log($"Before hit: {targetCollider.gameObject.name} has {inventory.GetHitCount()} hit(s).");
+                    inventory.AddHit();
+                    Debug.Log($"After hit: {targetCollider.gameObject.name} now has {inventory.GetHitCount()} hit(s).");
+
+                    if (inventory.GetHitCount() >= 2)
+                    {
+                        Debug.Log("Obstacle destroyed after two hits.");
+                        Destroy(targetCollider.gameObject);
+                    }
+                    else
+                    {
+                        Debug.Log("Obstacle has been hit once, awaiting second hit.");
+                    }
+                }
+                else
+                {
+                    Destroy(targetCollider.gameObject);
+                    Debug.Log("Obstacle destroyed (no inventory component).");
+                }
+            }
+            else
+            {
+                Debug.Log("Target not reached or no longer valid.");
+            }
+
+            yield return new WaitForSeconds(0.5f);
         }
     }
-    private Vector2 GetIdlePosition()
+
+    private void EndGame()
     {
-        // Logic to get a random idle position within the patrol area
-        return new Vector2(Random.Range(-1f, 1f), Random.Range(-1f, 1f)).normalized;
+        Debug.Log("Game Over! All obstacles have been destroyed.");
+        // Place your game-ending logic here (for example: load a Game Over screen).
     }
-    private void OnTriggerEnter2D(Collider2D other)
+
+
+    /// Finds the closest obstacle using an overlap circle and filtering by tag/layer.
+    private Collider2D FindClosestTarget()
     {
-        if (other.CompareTag("Player"))
+        float searchRadius = 10f;
+        Collider2D[] targets = Physics2D.OverlapCircleAll(transform.position, searchRadius, targetLayerMask);
+        if (targets.Length == 0)
+            return null;
+
+        Collider2D closest = null;
+        float minDistance = Mathf.Infinity;
+        int wallLayer = LayerMask.NameToLayer("Wall"); // For filtering walls.
+
+        foreach (Collider2D col in targets)
         {
-            currentState = State.Attack;
-            // pathfinding.MoveTo(other.transform.position); // Move towards the player
-            // pathfinding.enabled = false; // Disable pathfinding to stop movement
-            StartCoroutine(AttackRoutine(other.transform));
+            Debug.Log($"Checking: {col.gameObject.name}, Layer: {LayerMask.LayerToName(col.gameObject.layer)}, Tag: {col.tag}");
+
+            // Skip walls.
+            if (col.gameObject.layer == wallLayer || col.CompareTag("Wall"))
+            {
+                Debug.Log("Skipping wall: " + col.name);
+                continue;
+            }
+            // Only consider obstacles.
+            if (!col.CompareTag("Obstacle"))
+            {
+                Debug.Log("Skipping non-obstacle: " + col.name);
+                continue;
+            }
+            float distance = Vector2.Distance(transform.position, col.transform.position);
+            if (distance < minDistance)
+            {
+                minDistance = distance;
+                closest = col;
+            }
         }
-        else if (other.CompareTag("Obstacle"))
+
+        if (closest != null)
         {
-            currentState = State.Attack;
-            // pathfinding.MoveTo(other.transform.position); // Move towards the obstacle
-            //Stop enemy from moving
-            // pathfinding.enabled = false; // Disable pathfinding to stop movement
-            // Start attacking the obstacle or player
-            StartCoroutine(AttackRoutine(other.transform));
+            Debug.Log("Selected target: " + closest.gameObject.name + " with tag " + closest.gameObject.tag);
         }
+
+        return closest;
     }
-    private IEnumerator AttackRoutine(Transform target)
+
+ 
+    /// Handles the quiz result.
+    /// If the quiz is passed, fix the enemy (change sprite/color, set to idle) and stop hostile routines.
+    /// Otherwise, resume hostile behavior.
+    private void HandleQuizResult(bool success)
     {
-        while (currentState == State.Attack)
+        if (success)
         {
-            // Logic to attack the player
-            // For example, shoot a projectile or deal damage
-            yield return new WaitForSeconds(1f); // Attack cooldown
+            // Fix the enemy (change its appearance and set to idle).
+            SpriteRenderer sr = GetComponent<SpriteRenderer>();
+            if (sr != null)
+            {
+                sr.color = Color.green; // Or swap out the sprite:
+                // sr.sprite = fixedRobotSprite;
+            }
+            currentState = State.Idle;
+            StopAllCoroutines(); // Stop the run and destroy routine.
+            GameManager.Instance.ResumeGameAfterQuiz();
+            GameManager.Instance.RecordQuizResult(success);
+
         }
+        else
+        {
+            Debug.Log("Quiz failed! The misalignment persists.");
+            // Only resume hostility if the quiz failed.
+            StartCoroutine(RunAndDestroyTarget());
+            GameManager.Instance.ResumeGameAfterQuiz();
+            GameManager.Instance.RecordQuizResult(success);
+
+        }
+
+        // Unsubscribe from quiz events to avoid duplicate calls.
+        if (trueFalseQuiz != null)
+            trueFalseQuiz.OnQuizResult -= HandleQuizResult;
+        if (yesNoQuiz != null)
+            yesNoQuiz.OnQuizResult -= HandleQuizResult;
     }
 }
+
+ 
+
+
