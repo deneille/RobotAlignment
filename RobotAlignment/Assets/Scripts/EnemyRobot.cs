@@ -313,6 +313,7 @@ public class EnemyRobot : MonoBehaviour, IInteractable
     {
         Debug.Log("Game Over! All obstacles have been destroyed.");
         // Place your game-ending logic here (for example: load a Game Over screen).
+        GameManager.Instance.CheckGameOutcome(); // Assuming you have a method to handle game over logic.
     }
 
 

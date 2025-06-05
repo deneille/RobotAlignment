@@ -184,7 +184,8 @@ public class GameManager : MonoBehaviour
         CheckGameOutcome();
     }
 
-    private void CheckGameOutcome()
+
+    public void CheckGameOutcome()
     {
         // Condition: If any obstacles have been destroyed by enemy robot before finishing quizzes, player loses.
         if (AreAllObstaclesDestroyed())
