@@ -12,7 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 702052c42a836454988958029d37c432, type: 3}
   m_Name: Enemy4_QuizData
   m_EditorClassIdentifier: 
-  question: 'True or False: RL learning along with long CoT models to train the latest
-    LLMs.'
-  correctAnswer: 1
+  questions:
+  - "The blue agent in DeepMind\u2019s experiment followed the red bot even when
+    it led to penalties, showing goal misgeneralization."
+  - An agent exploiting a reward loop is showing poor optimization skills.
+  - AI safety is important because misaligned agents can behave unpredictably in
+    high-stakes environments.
+  answers: 010001
   timeLimit: 20

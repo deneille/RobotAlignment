@@ -12,7 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 702052c42a836454988958029d37c432, type: 3}
   m_Name: Enemy1_QuizData
   m_EditorClassIdentifier: 
-  question: 'True or False: Goal Misgeneralization occurs when an RL agent competently
-    achieves a goal that''s correlated with, but different from, the intended objective.'
-  correctAnswer: 1
+  questions:
+  - In reinforcement learning, agents learn by interacting with an environment and
+    receiving rewards or penalties based on their actions.
+  - In the resource, the Blackjack agent was trained using a policy-based method.
+  - Goal misgeneralization can occur even when the reward function is correctly specified.
+  answers: 010001
   timeLimit: 20

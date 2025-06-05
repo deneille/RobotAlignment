@@ -140,6 +140,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   speed: 2
+  stoppingDistance: 0.5
 --- !u!95 &3135528146670545795
 Animator:
   serializedVersion: 5
@@ -175,14 +176,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   enemyId: 
   fixedRobotSprite: {fileID: 21300000, guid: b2ae64bfaf6151f419fa6c84908f3a2c, type: 3}
-  robotDialogue: {fileID: 11400000, guid: 776e6ec37f05e914da10140da003194f, type: 2}
+  robotDialogue: {fileID: 0}
   trueFalseQuiz: {fileID: 0}
   yesNoQuiz: {fileID: 0}
   pathfinder: {fileID: 3831050348807406709}
   targetLayerMask:
     serializedVersion: 2
     m_Bits: 8
-  runCount: 2
 --- !u!1 &4397921952271118311
 GameObject:
   m_ObjectHideFlags: 0

@@ -1,7 +1,9 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 public class GameManager : MonoBehaviour
 {
@@ -10,6 +12,11 @@ public class GameManager : MonoBehaviour
     public GameObject loseScreen;  // Assign your lose panel in the Inspector
     public TMPro.TextMeshProUGUI winText;   // Optional, display win text
     public TMPro.TextMeshProUGUI loseText;  // Optional, display lose text
+
+    [Header("Restart Button UI")]
+    
+    public Button restartLoseButton;
+    public Button restartWinButton;
 
     [Header("Level Settings")]
     public int totalQuizzesInLevel = 3;  // Number of quizzes the player must solve
@@ -21,16 +28,125 @@ public class GameManager : MonoBehaviour
     public GameObject quizPanel; // Assign this reference in the Inspector.
     private Vector3 playerSavedPosition;
 
+
     private void Awake()
     {
         if (Instance == null)
         {
             Instance = this;
-            DontDestroyOnLoad(gameObject); // Keep this instance alive across scenes.
+            DontDestroyOnLoad(gameObject); // Persist across scenes
+
+            SceneManager.sceneLoaded += OnSceneLoaded; //Reassign references after reload
         }
         else
         {
-            Destroy(gameObject); // Destroy duplicate instances.
+            Destroy(gameObject); // Destroy duplicates
+            return;
+        }
+    }
+
+
+    private void OnEnable()
+    {
+        SceneManager.sceneLoaded += OnSceneLoaded;
+    }
+
+    private void OnDisable()
+    {
+        SceneManager.sceneLoaded -= OnSceneLoaded;
+    }
+
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        Debug.Log($"Scene loaded: {scene.name}");
+        FindAndAssignPlayerAndUIElements();
+        ResetQuizCounters();
+    }
+    public void FindAndAssignPlayerAndUIElements()
+    {
+        // Reassign Player
+        player = GameObject.FindWithTag("Player");
+
+        if (player == null)
+            Debug.LogError("Player not found! Ensure player has tag 'Player'.");
+
+        // Find panels (even if inactive)
+        quizPanel = Resources.FindObjectsOfTypeAll<GameObject>()
+                    .FirstOrDefault(obj => obj.name == "QuizPanel");
+
+        winScreen = Resources.FindObjectsOfTypeAll<GameObject>()
+                    .FirstOrDefault(obj => obj.name == "WinPanel");
+
+        loseScreen = Resources.FindObjectsOfTypeAll<GameObject>()
+                    .FirstOrDefault(obj => obj.name == "LosePanel");
+
+        // Assign Restart Buttons inside panels
+        if (winScreen != null)
+        {
+            restartWinButton = winScreen.GetComponentsInChildren<Button>(true)
+                                .FirstOrDefault(btn => btn.name == "Restart Button");
+
+            if (restartWinButton != null)
+            {
+                restartWinButton.onClick.RemoveAllListeners();
+                restartWinButton.onClick.AddListener(RestartGame);
+                Debug.Log("RestartWinButton successfully assigned.");
+            }
+            else
+            {
+                Debug.LogWarning("RestartWinButton not found inside WinPanel.");
+            }
+        }
+
+        if (loseScreen != null)
+        {
+            restartLoseButton = loseScreen.GetComponentsInChildren<Button>(true)
+                                .FirstOrDefault(btn => btn.name == "Restart Button");
+
+            if (restartLoseButton != null)
+            {
+                restartLoseButton.onClick.RemoveAllListeners();
+                restartLoseButton.onClick.AddListener(RestartGame);
+                Debug.Log("RestartLoseButton successfully assigned.");
+            }
+            else
+            {
+                Debug.LogWarning("RestartLoseButton not found inside LosePanel.");
+            }
+        }
+
+        Debug.Log("UI elements reassigned.");
+    }
+
+
+
+    void Start()
+    {
+        FindAndAssignPlayerAndUIElements(); // Ensure player and UI elements are assigned at the start.
+        if (quizPanel != null)
+        {
+            quizPanel.SetActive(false); // Hide the quiz panel at the start.
+        }
+        else
+        {
+            Debug.LogError("Quiz Panel is not assigned. Make sure to assign it in the Inspector.");
+        }
+        if(restartWinButton != null && restartLoseButton != null)
+        {
+            restartWinButton.onClick.AddListener(RestartGame); // Add listener to restart button.
+            restartLoseButton.onClick.AddListener(RestartGame); // Add listener to restart button.
+        }
+        else if(restartWinButton != null)
+        {
+            restartWinButton.onClick.AddListener(RestartGame); // Add listener to restart button.
+        }
+        else if(restartLoseButton != null)
+        {
+            restartLoseButton.onClick.AddListener(RestartGame); // Add listener to restart button.
+        }
+        else
+        {
+            Debug.LogError("Restart Button is not assigned. Make sure to assign it in the Inspector.");
         }
     }
 
@@ -38,6 +154,13 @@ public class GameManager : MonoBehaviour
     {
         GameObject[] obstacles = GameObject.FindGameObjectsWithTag("Obstacle");
         return obstacles.Length == 0;
+    }
+
+    public void ResetQuizCounters()
+    {
+        passedQuizCount = 0;
+        lostQuizCount = 0;
+        Debug.Log("Quiz counters reset.");
     }
 
     public void RecordQuizResult(bool success)
@@ -88,6 +211,11 @@ public class GameManager : MonoBehaviour
 
     public void SavePlayerPosition()
     {
+        if (player == null)
+        {
+            Debug.LogError("Cannot save position — player is not assigned!");
+            return;
+        }
         playerSavedPosition = player.transform.position; // Save the player's position.
     }
 
@@ -132,8 +260,9 @@ public class GameManager : MonoBehaviour
 
     public void RestartGame()
     {
+        ResetQuizCounters();
         Time.timeScale = 1f;
-        SceneManager.LoadScene("Start Scene");
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 
     // This method activates the quiz panel.
@@ -167,14 +296,22 @@ public class GameManager : MonoBehaviour
     {
         if (quizPanel != null)
         {
-            // Option 1: If your quiz panel contains dynamic UI elements (like text or buttons)
-            // you could iterate over them and clear or destroy their content.
             foreach (Transform child in quizPanel.transform)
             {
-                // Here we're simply destroying child game objects.
-                // Alternatively, you can reset their state instead of destroying.
-                Destroy(child.gameObject);
+                var textComponent = child.GetComponent<TMPro.TextMeshProUGUI>();
+                if (textComponent != null)
+                {
+                    textComponent.text = ""; // Clear text content.
+                }
+
+                var buttonComponent = child.GetComponent<Button>();
+                if (buttonComponent != null)
+                {
+                    buttonComponent.onClick.RemoveAllListeners(); // Clear button listeners.
+                    buttonComponent.interactable = true; // Ensure buttons are active and functional.
+                }
             }
+            Debug.Log("Quiz panel cleared for reuse.");
         }
     }
 }

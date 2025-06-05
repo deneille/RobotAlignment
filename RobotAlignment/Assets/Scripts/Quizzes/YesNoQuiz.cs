@@ -17,6 +17,8 @@ public class YesNoQuiz : MonoBehaviour
     public event QuizResult OnQuizResult;
 
     [Header("Quiz Settings")]
+    private string [] questions;
+    private bool [] answers;
     private string question;
     private bool correctAnswer;
     private float timeLimit;
@@ -41,8 +43,9 @@ public class YesNoQuiz : MonoBehaviour
         if(quizData == null) return; // Ensure quizData is assigned before starting the quiz.
         ResetQuizUI(); // Reset the UI before starting a new quiz.
         // Initialize quiz data.
-        question = quizData.question;
-        correctAnswer = quizData.correctAnswer;
+        int questionIndex = Random.Range(0, quizData.questions.Length);
+        question = quizData.questions[questionIndex];
+        correctAnswer = quizData.answers[questionIndex];
         timeLimit = quizData.timeLimit;
 
         answerGiven = false;

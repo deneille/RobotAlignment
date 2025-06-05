@@ -12,7 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 702052c42a836454988958029d37c432, type: 3}
   m_Name: Enemy3_QuizData
   m_EditorClassIdentifier: 
-  question: In Deep Mind's goal misalignment experiment, the agent initially succeeded
-    in its objective.
-  correctAnswer: 1
+  questions:
+  - Deep Q-Networks store Q-values in a lookup table for each state.
+  - "In CoinRun, the agent misgeneralized the task by associating \u201Cgo right\u201D
+    with reward instead of \u201Ccollect coin.\u201D"
+  - "Reward hacking is easily avoided by telling the agent to \u201Cdo the right
+    thing.\u201D"
+  answers: 000100
   timeLimit: 20

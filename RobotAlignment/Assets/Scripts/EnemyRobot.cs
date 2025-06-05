@@ -30,6 +30,7 @@ public class EnemyRobot : MonoBehaviour, IInteractable
 
     // Flag indicating whether the quiz has been completed.
     private bool completedQuiz = false;
+    private static bool hasShownFirstRobotDialogue = false;
 
     private void Awake()
     {
@@ -71,11 +72,45 @@ public class EnemyRobot : MonoBehaviour, IInteractable
             return;
         }
 
-        Debug.Log($"Interacting with robot: {enemyId}");
-        GameManager.Instance.SavePlayerPosition(); // Save the player's position
-        Time.timeScale = 0f; // Pause the game
-        StartCoroutine(PlayDialogueSequence());
+        GameManager.Instance.SavePlayerPosition();
+
+        if (!hasShownFirstRobotDialogue)
+        {
+            Debug.Log($"Showing first robot dialogue from: {enemyId}");
+            hasShownFirstRobotDialogue = true; // lock it in
+            Time.timeScale = 0f;
+            StartCoroutine(PlayDialogueSequence()); // includes quiz at end
+        }
+        else
+        {
+            Debug.Log($"Skipping dialogue for {enemyId}, going straight to quiz.");
+            Time.timeScale = 0f;
+            StartQuizOnly(); // skip dialogue and go straight to quiz
+        }
     }
+
+    private void StartQuizOnly()
+    {
+        if (trueFalseQuiz != null)
+        {
+            trueFalseQuiz.ResetQuizUI();
+            trueFalseQuiz.OnQuizResult += HandleQuizResult;
+            if (!trueFalseQuiz.gameObject.activeInHierarchy)
+                trueFalseQuiz.gameObject.SetActive(true);
+            trueFalseQuiz.StartQuiz();
+        }
+        else if (yesNoQuiz != null)
+        {
+            yesNoQuiz.ResetQuizUI();
+            yesNoQuiz.OnQuizResult += HandleQuizResult;
+            if (!yesNoQuiz.gameObject.activeInHierarchy)
+                yesNoQuiz.gameObject.SetActive(true);
+            yesNoQuiz.StartQuiz();
+        }
+
+        completedQuiz = true;
+    }
+
 
     // Determines if the enemy can currently be interacted with.
     public bool CanInteract() => isEnemy && !completedQuiz;
@@ -95,7 +130,7 @@ public class EnemyRobot : MonoBehaviour, IInteractable
         isInDialogue = true;
         currentDialogueIndex = 0;
 
-        while (currentDialogueIndex < robotDialogue.dialogueLines.Length)
+        while (currentDialogueIndex < robotDialogue.dialogueLines.Length && !hasShownFirstRobotDialogue)
         {
             string currentLine = robotDialogue.dialogueLines[currentDialogueIndex];
             // Display the current dialogue line.
@@ -126,18 +161,22 @@ public class EnemyRobot : MonoBehaviour, IInteractable
         // Make sure the quiz object is active before starting its coroutine.
         if (trueFalseQuiz != null)
         {
+            trueFalseQuiz.ResetQuizUI(); // Reset the quiz UI before starting.
+            trueFalseQuiz.OnQuizResult += HandleQuizResult; // Subscribe to the quiz result event.
             if (!trueFalseQuiz.gameObject.activeInHierarchy)
                 trueFalseQuiz.gameObject.SetActive(true);
 
-            trueFalseQuiz.OnQuizResult += HandleQuizResult;
+            // trueFalseQuiz.OnQuizResult += HandleQuizResult;
             trueFalseQuiz.StartQuiz();
         }
         else if (yesNoQuiz != null)
         {
+            yesNoQuiz.ResetQuizUI();
+            yesNoQuiz.OnQuizResult += HandleQuizResult; // Subscribe to the quiz result event.
             if (!yesNoQuiz.gameObject.activeInHierarchy)
                 yesNoQuiz.gameObject.SetActive(true);
 
-            yesNoQuiz.OnQuizResult += HandleQuizResult;
+
             yesNoQuiz.StartQuiz();
         }
 
@@ -357,6 +396,13 @@ public class EnemyRobot : MonoBehaviour, IInteractable
             trueFalseQuiz.OnQuizResult -= HandleQuizResult;
         if (yesNoQuiz != null)
             yesNoQuiz.OnQuizResult -= HandleQuizResult;
+    }
+
+    private void OnDisable()
+    {
+        StopAllCoroutines();
+        isInDialogue = false;
+        currentDialogueIndex = 0;
     }
 }
 

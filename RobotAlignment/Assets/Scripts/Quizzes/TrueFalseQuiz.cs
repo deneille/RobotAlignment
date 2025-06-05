@@ -17,12 +17,26 @@ public class TrueFalseQuiz : MonoBehaviour
     public event QuizResult OnQuizResult;
 
     [Header("Quiz Settings")]
+    private string [] questions;
+    private bool [] answers;
     private string question;
     private bool correctAnswer;
     private float timeLimit;
     
     private float timer;
     private bool answerGiven = false;
+
+    private void Awake()
+    {
+        if (trueButton == null)
+            trueButton = GameObject.Find("True").GetComponent<Button>();
+
+        if (falseButton == null)
+            falseButton = GameObject.Find("False").GetComponent<Button>();
+
+        if (quizText == null)
+            quizText = GameObject.Find("Quiz Text").GetComponent<TextMeshProUGUI>();
+    }
 
     private void Start()
     {
@@ -33,27 +47,28 @@ public class TrueFalseQuiz : MonoBehaviour
     // Call this method to start the quiz.
     public void StartQuiz()
     {
-        if(quizData == null) return; // Ensure quizData is assigned before starting the quiz.
-        ResetQuizUI(); // Reset the UI before starting a new quiz.
-        // Initialize quiz data.
-        question = quizData.question;
-        correctAnswer = quizData.correctAnswer;
-        timeLimit = quizData.timeLimit;
+        if (trueButton == null || falseButton == null || quizText == null)
+        {
+            Debug.LogError("Missing UI references! Reinitializing...");
+            Awake(); // Reassign references dynamically.
+        }
 
-        answerGiven = false;
-        timer = timeLimit;
+        ResetQuizUI(); // Clear UI for the new quiz.
+
+        // Initialize quiz data.
+        int questionIndex = Random.Range(0, quizData.questions.Length);
+        question = quizData.questions[questionIndex];
+        correctAnswer = quizData.answers[questionIndex];
 
         quizPanel.SetActive(true);
         quizText.text = question;
 
-        // Clear any previous button listeners.
-        trueButton.onClick.RemoveAllListeners();
-        falseButton.onClick.RemoveAllListeners();
-
+        // Assign new listeners for the buttons.
         trueButton.onClick.AddListener(() => AnswerQuiz(true));
         falseButton.onClick.AddListener(() => AnswerQuiz(false));
 
         // Start the timed countdown.
+        timer = quizData.timeLimit;
         StartCoroutine(RunTimer());
     }
 
@@ -97,18 +112,29 @@ public class TrueFalseQuiz : MonoBehaviour
 
     public void ResetQuizUI()
     {
-        answerGiven = false;    // Reset the flag so a new answer can be accepted.
-        quizText.text = "";     // Clear out any previous question or feedback text.
-        
-        // Remove old listeners so you don't get duplicate calls.
-        trueButton.onClick.RemoveAllListeners();
-        falseButton.onClick.RemoveAllListeners();
-        
-        // Reset the timer if you display it on screen.
-        timer = timeLimit;
-        
-        Debug.Log("Quiz UI reset");
+        if (quizText != null)
+        {
+            quizText.text = ""; // Clear the quiz question text.
+        }
+
+        if (trueButton != null)
+        {
+            trueButton.onClick.RemoveAllListeners(); // Clear previous listeners.
+            trueButton.gameObject.SetActive(true); // Ensure the button is active.
+        }
+
+        if (falseButton != null)
+        {
+            falseButton.onClick.RemoveAllListeners(); // Clear previous listeners.
+            falseButton.gameObject.SetActive(true); // Ensure the button is active.
+        }
+
+        answerGiven = false; // Reset the flag.
+        timer = quizData != null ? quizData.timeLimit : 0; // Reset the timer.
+        Debug.Log("Quiz UI reset successfully for reuse.");
     }
+
+
 
 
     private IEnumerator HidePanelAfterDelay(float delay)
