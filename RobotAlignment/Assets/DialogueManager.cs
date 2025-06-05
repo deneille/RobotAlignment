@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-using TMPro; // Assuming you are using TextMeshPro for UI text
-using UnityEngine.UI; // Assuming you are using Unity's UI system for images
+using TMPro;
+using UnityEngine.UI; 
 
 public class DialogueManager : MonoBehaviour
 {
@@ -16,7 +16,6 @@ public class DialogueManager : MonoBehaviour
     // Store a reference to the active typewriter coroutine.
     private Coroutine typewriterCoroutine;
     private bool hasInitializedOnce = false;
-
 
     private void Awake()
     {
@@ -30,10 +29,12 @@ public class DialogueManager : MonoBehaviour
         else
         {
             Destroy(gameObject);
+            return; // Important: exit early to prevent further execution
         }
 
         // Hide dialogue panel at start
-        dialoguePanel.SetActive(false);
+        if (dialoguePanel != null)
+            dialoguePanel.SetActive(false);
     }
 
     void Start()
@@ -47,7 +48,7 @@ public class DialogueManager : MonoBehaviour
             }
         }
 
-        if (dialogueText == null)
+        if (dialogueText == null && dialoguePanel != null)
         {
             dialogueText = dialoguePanel.GetComponentInChildren<TMPro.TextMeshProUGUI>();
             if (dialogueText == null)
@@ -66,7 +67,6 @@ public class DialogueManager : MonoBehaviour
             yield return new WaitForSeconds(typingSpeed);
         }
     }
-
 
     public void ShowDialogue(string message, float duration = 5f)
     {
@@ -87,6 +87,8 @@ public class DialogueManager : MonoBehaviour
 
     private IEnumerator TypeSentenceAndAutoHide(string sentence, float duration)
     {
+        if (dialogueText == null) yield break;
+        
         dialogueText.text = "";
         // Typewriter effect: reveal sentence character by character.
         foreach (char letter in sentence)
@@ -98,16 +100,10 @@ public class DialogueManager : MonoBehaviour
 
         // Wait for the specified duration after the full sentence is displayed.
         yield return new WaitForSecondsRealtime(duration);
-        dialoguePanel.SetActive(false);
+        if (dialoguePanel != null)
+            dialoguePanel.SetActive(false);
         typewriterCoroutine = null;
     }
-
-
-    // private IEnumerator HideDialogueAfterDelay(float delay)
-    // {
-    //     yield return new WaitForSeconds(delay);
-    //     dialoguePanel.SetActive(false);
-    // }
 
     public void HideDialogue()
     {
@@ -116,15 +112,23 @@ public class DialogueManager : MonoBehaviour
             StopCoroutine(typewriterCoroutine);
             typewriterCoroutine = null;
         }
-        dialoguePanel.SetActive(false);
+        if (dialoguePanel != null)
+            dialoguePanel.SetActive(false);
     }
+
     private void OnDestroy()
     {
         if (Instance == this)
+        {
             SceneManager.sceneLoaded -= OnSceneLoaded;
+            Instance = null;
+        }
     }
+
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
+        Debug.Log($"DialogueManager: Scene loaded: {scene.name}");
+        
         if (hasInitializedOnce)
         {
             Debug.Log("Reassigning DialoguePanel after scene reload.");
@@ -148,13 +152,14 @@ public class DialogueManager : MonoBehaviour
             if (rect.name == "DialoguePanel")
             {
                 dialoguePanel = rect.gameObject;
+                Debug.Log("DialoguePanel reassigned successfully.");
                 break;
             }
         }
 
         if (dialoguePanel == null)
         {
-            Debug.LogError("Dialogue Panel not found in the scene.");
+            Debug.LogError("Dialogue Panel not found in the scene after reload.");
             yield break;
         }
 
@@ -162,25 +167,11 @@ public class DialogueManager : MonoBehaviour
         dialogueText = dialoguePanel.GetComponentInChildren<TMPro.TextMeshProUGUI>(true);
         if (dialogueText == null)
         {
-            Debug.LogError("Dialogue Text not found in Dialogue Panel.");
+            Debug.LogError("Dialogue Text not found in Dialogue Panel after reload.");
+        }
+        else
+        {
+            Debug.Log("DialogueText reassigned successfully.");
         }
     }
-
-
-    private void ReassignDialoguePanel()
-    {
-        dialoguePanel = GameObject.Find("DialoguePanel");
-        if (dialoguePanel == null)
-        {
-            Debug.LogError("Dialogue Panel not found in the scene.");
-            return;
-        }
-
-        dialogueText = dialoguePanel.GetComponentInChildren<TMPro.TextMeshProUGUI>();
-        if (dialogueText == null)
-        {
-            Debug.LogError("Dialogue Text not found in Dialogue Panel.");
-        }
-    }
-
 }

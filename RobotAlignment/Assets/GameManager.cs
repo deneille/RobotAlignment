@@ -14,7 +14,7 @@ public class GameManager : MonoBehaviour
     public TMPro.TextMeshProUGUI loseText;  // Optional, display lose text
 
     [Header("Restart Button UI")]
-    
+
     public Button restartLoseButton;
     public Button restartWinButton;
 
@@ -27,6 +27,7 @@ public class GameManager : MonoBehaviour
     public GameObject player;
     public GameObject quizPanel; // Assign this reference in the Inspector.
     private Vector3 playerSavedPosition;
+    private bool hasShownFirstRobotDialogue = false;
 
 
     private void Awake()
@@ -131,16 +132,16 @@ public class GameManager : MonoBehaviour
         {
             Debug.LogError("Quiz Panel is not assigned. Make sure to assign it in the Inspector.");
         }
-        if(restartWinButton != null && restartLoseButton != null)
+        if (restartWinButton != null && restartLoseButton != null)
         {
             restartWinButton.onClick.AddListener(RestartGame); // Add listener to restart button.
             restartLoseButton.onClick.AddListener(RestartGame); // Add listener to restart button.
         }
-        else if(restartWinButton != null)
+        else if (restartWinButton != null)
         {
             restartWinButton.onClick.AddListener(RestartGame); // Add listener to restart button.
         }
-        else if(restartLoseButton != null)
+        else if (restartLoseButton != null)
         {
             restartLoseButton.onClick.AddListener(RestartGame); // Add listener to restart button.
         }
@@ -160,6 +161,7 @@ public class GameManager : MonoBehaviour
     {
         passedQuizCount = 0;
         lostQuizCount = 0;
+        hasShownFirstRobotDialogue = false;
         Debug.Log("Quiz counters reset.");
     }
 
@@ -193,7 +195,7 @@ public class GameManager : MonoBehaviour
             ShowLoseScreen("Enemies destroyed all obstacles!");
             return;
         }
-        
+
         // Condition: If player has lost any quiz (or if lostQuizCount reaches a threshold, e.g. 1 or 3).
         // Here, we assume if even one quiz is wrong the game is lost. Adapt accordingly.
         if (lostQuizCount > 0)
@@ -201,14 +203,14 @@ public class GameManager : MonoBehaviour
             ShowLoseScreen("You failed a quiz!");
             return;
         }
-        
+
         // If player has passed all quizzes, win the game.
         if (passedQuizCount == totalQuizzesInLevel)
         {
             ShowWinScreen("All quizzes solved correctly!");
         }
     }
-    
+
 
     public void SavePlayerPosition()
     {
@@ -238,7 +240,7 @@ public class GameManager : MonoBehaviour
         if (winScreen != null)
         {
             winScreen.SetActive(true);
-            if(winText != null)
+            if (winText != null)
             {
                 winText.text = message;
             }
@@ -252,7 +254,7 @@ public class GameManager : MonoBehaviour
         if (loseScreen != null)
         {
             loseScreen.SetActive(true);
-            if(loseText != null)
+            if (loseText != null)
             {
                 loseText.text = message;
             }
@@ -292,7 +294,7 @@ public class GameManager : MonoBehaviour
     public IEnumerator HideUIAfterDelay(float delay, GameObject uiElement)
     {
         yield return new WaitForSecondsRealtime(delay);
-        if(uiElement != null)
+        if (uiElement != null)
             uiElement.SetActive(false);
     }
 
@@ -320,4 +322,23 @@ public class GameManager : MonoBehaviour
             Debug.Log("Quiz panel cleared for reuse.");
         }
     }
+    public bool HasShownFirstRobotDialogue()
+    {
+        return hasShownFirstRobotDialogue;
+    }
+
+    //Marks that the first robot dialogue has been shown
+    public void SetFirstRobotDialogueShown()
+    {
+        hasShownFirstRobotDialogue = true;
+        Debug.Log("First robot dialogue marked as shown.");
+    }
+
+    // Resets the first robot dialogue flag (useful for scene reloads/restarts)
+    public void ResetFirstRobotDialogueFlag()
+    {
+        hasShownFirstRobotDialogue = false;
+        Debug.Log("First robot dialogue flag reset.");
+    }
+
 }

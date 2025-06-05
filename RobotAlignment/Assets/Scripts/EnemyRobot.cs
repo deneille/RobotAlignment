@@ -21,7 +21,6 @@ public class EnemyRobot : MonoBehaviour, IInteractable
 
     [Header("Movement & Targeting")]
     [SerializeField] private EnemyPathfinding pathfinder; // Reference to the pathfinding script
-
     [SerializeField] private LayerMask targetLayerMask;
 
     // For simplicity, we only use two states here.
@@ -30,7 +29,6 @@ public class EnemyRobot : MonoBehaviour, IInteractable
 
     // Flag indicating whether the quiz has been completed.
     private bool completedQuiz = false;
-    private static bool hasShownFirstRobotDialogue = false;
 
     private void Awake()
     {
@@ -74,10 +72,11 @@ public class EnemyRobot : MonoBehaviour, IInteractable
 
         GameManager.Instance.SavePlayerPosition();
 
-        if (!hasShownFirstRobotDialogue)
+        // Check if this is the first robot interaction in the current game session
+        if (!GameManager.Instance.HasShownFirstRobotDialogue())
         {
             Debug.Log($"Showing first robot dialogue from: {enemyId}");
-            hasShownFirstRobotDialogue = true; // lock it in
+            GameManager.Instance.SetFirstRobotDialogueShown(); // Mark as shown
             Time.timeScale = 0f;
             StartCoroutine(PlayDialogueSequence()); // includes quiz at end
         }
@@ -111,7 +110,6 @@ public class EnemyRobot : MonoBehaviour, IInteractable
         completedQuiz = true;
     }
 
-
     // Determines if the enemy can currently be interacted with.
     public bool CanInteract() => isEnemy && !completedQuiz;
 
@@ -130,7 +128,7 @@ public class EnemyRobot : MonoBehaviour, IInteractable
         isInDialogue = true;
         currentDialogueIndex = 0;
 
-        while (currentDialogueIndex < robotDialogue.dialogueLines.Length && !hasShownFirstRobotDialogue)
+        while (currentDialogueIndex < robotDialogue.dialogueLines.Length)
         {
             string currentLine = robotDialogue.dialogueLines[currentDialogueIndex];
             // Display the current dialogue line.
@@ -166,7 +164,6 @@ public class EnemyRobot : MonoBehaviour, IInteractable
             if (!trueFalseQuiz.gameObject.activeInHierarchy)
                 trueFalseQuiz.gameObject.SetActive(true);
 
-            // trueFalseQuiz.OnQuizResult += HandleQuizResult;
             trueFalseQuiz.StartQuiz();
         }
         else if (yesNoQuiz != null)
@@ -176,12 +173,10 @@ public class EnemyRobot : MonoBehaviour, IInteractable
             if (!yesNoQuiz.gameObject.activeInHierarchy)
                 yesNoQuiz.gameObject.SetActive(true);
 
-
             yesNoQuiz.StartQuiz();
         }
 
         completedQuiz = true;
-        // EndInteraction();
     }
 
     // Called after dialogue (and quiz start) to unpause the game.
@@ -316,7 +311,6 @@ public class EnemyRobot : MonoBehaviour, IInteractable
         GameManager.Instance.CheckGameOutcome(); // Assuming you have a method to handle game over logic.
     }
 
-
     /// Finds the closest obstacle using an overlap circle and filtering by tag/layer.
     private Collider2D FindClosestTarget()
     {
@@ -361,7 +355,6 @@ public class EnemyRobot : MonoBehaviour, IInteractable
         return closest;
     }
 
- 
     /// Handles the quiz result.
     /// If the quiz is passed, fix the enemy (change sprite/color, set to idle) and stop hostile routines.
     /// Otherwise, resume hostile behavior.
@@ -380,7 +373,6 @@ public class EnemyRobot : MonoBehaviour, IInteractable
             StopAllCoroutines(); // Stop the run and destroy routine.
             GameManager.Instance.ResumeGameAfterQuiz();
             GameManager.Instance.RecordQuizResult(success);
-
         }
         else
         {
@@ -389,7 +381,6 @@ public class EnemyRobot : MonoBehaviour, IInteractable
             StartCoroutine(RunAndDestroyTarget());
             GameManager.Instance.ResumeGameAfterQuiz();
             GameManager.Instance.RecordQuizResult(success);
-
         }
 
         // Unsubscribe from quiz events to avoid duplicate calls.
