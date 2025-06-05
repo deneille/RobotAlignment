@@ -6720,6 +6720,10 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 0}
     - target: {fileID: 8412094786179977133, guid: 1b1c876e8d3f3424ea23bd6e82e2d0f3, type: 3}
+      propertyPath: robotDialogue
+      value: 
+      objectReference: {fileID: 11400000, guid: 776e6ec37f05e914da10140da003194f, type: 2}
+    - target: {fileID: 8412094786179977133, guid: 1b1c876e8d3f3424ea23bd6e82e2d0f3, type: 3}
       propertyPath: trueFalseQuiz
       value: 
       objectReference: {fileID: 2107304858}
@@ -7352,6 +7356,10 @@ PrefabInstance:
       propertyPath: m_LocalPosition.y
       value: 2.95
       objectReference: {fileID: 0}
+    - target: {fileID: 8412094786179977133, guid: 1b1c876e8d3f3424ea23bd6e82e2d0f3, type: 3}
+      propertyPath: robotDialogue
+      value: 
+      objectReference: {fileID: 11400000, guid: 776e6ec37f05e914da10140da003194f, type: 2}
     - target: {fileID: 8412094786179977133, guid: 1b1c876e8d3f3424ea23bd6e82e2d0f3, type: 3}
       propertyPath: trueFalseQuiz
       value: 
