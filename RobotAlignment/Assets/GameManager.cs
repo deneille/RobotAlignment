@@ -264,6 +264,11 @@ public class GameManager : MonoBehaviour
         ResetQuizCounters();
         Time.timeScale = 1f;
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+        GameObject introPanel = GameObject.Find("IntroDialoguePanel");
+        if (introPanel != null)
+        {
+            introPanel.SetActive(false);
+        }
     }
 
     // This method activates the quiz panel.
