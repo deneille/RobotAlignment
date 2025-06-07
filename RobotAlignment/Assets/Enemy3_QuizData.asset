@@ -20,3 +20,9 @@ MonoBehaviour:
     thing.\u201D"
   answers: 000100
   timeLimit: 20
+  correctAnswers:
+  - Deep Q-Networks uses too much state space so a deep neural network is used to
+    approximate Q-values.
+  - null
+  - Reward hacking is not easily avoidable. The AI agent maximizes what it can reward,
+    not what we want. Fixing this is very difficult.

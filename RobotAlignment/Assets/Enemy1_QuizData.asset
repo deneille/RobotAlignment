@@ -19,3 +19,7 @@ MonoBehaviour:
   - Goal misgeneralization can occur even when the reward function is correctly specified.
   answers: 010001
   timeLimit: 20
+  correctAnswers:
+  - null
+  - In the resource, the Blackjack agent was trained using a value-based method (Q-learning).
+  - null

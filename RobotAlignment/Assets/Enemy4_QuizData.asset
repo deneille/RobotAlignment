@@ -20,3 +20,7 @@ MonoBehaviour:
     high-stakes environments.
   answers: 010001
   timeLimit: 20
+  correctAnswers:
+  - null
+  - An agent exploiting a reward loop is a show of strong optimization but goal misalignment.
+  - null

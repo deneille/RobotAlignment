@@ -95,6 +95,17 @@ public class TrueFalseQuiz : MonoBehaviour
         if (answer == correctAnswer)
         {
             quizText.text = "Calibration complete... directive realigned.";
+
+            // Show correct answer statement *only if* the correct answer is false
+            int index = System.Array.IndexOf(quizData.questions, question);
+            if (!correctAnswer && index >= 0 && index < quizData.correctAnswers.Length)
+            {
+                string correctStatement = quizData.correctAnswers[index];
+                if (!string.IsNullOrEmpty(correctStatement))
+                {
+                    quizText.text += $"\nCorrect explanation: {correctStatement}";
+                }
+            }
             OnQuizResult?.Invoke(true);
         }
         else

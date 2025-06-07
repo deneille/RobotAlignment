@@ -13,7 +13,7 @@ public class GameIntroDialogue : MonoBehaviour
     [Header("Dialogue Settings")]
     // The rules text that explains how to win and lose.
     [TextArea(3, 10)]
-    public string rulesText = "Rules:\n- Use E to interact + duel with robots through time-based quizzes.\n- Answer all quizzes correctly to win.\n- If you fail 3 quizzes or if enemy robots destroy all obstacles, you lose.\n\nGood luck!";
+    public string rulesText = "Rules:\n- Use WASD to move around.\n- Use E to interact + duel with robots through time-based quizzes.\n- Answer all quizzes correctly to win.\n- Answer a question correctly to fix robots to friendly green helpers.\n- If you fail 3 quizzes or if enemy robots destroy all obstacles, you lose.\n\nGood luck!";
     // How long to keep the dialogue on screen (in seconds)
     public float dialogueDuration = 10f;
 
