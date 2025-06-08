@@ -5,9 +5,10 @@ using UnityEngine.SceneManagement;
 
 public class StartMenuController : MonoBehaviour
 {
+    public string sceneToLoad; // The name of the scene to load when the game starts
     public void OnStartClicked()
     {
         // Load the game scene when the "Start" button is clicked
-        SceneManager.LoadScene("SampleScene");
+        SceneManager.LoadScene(sceneToLoad);
     }
 }

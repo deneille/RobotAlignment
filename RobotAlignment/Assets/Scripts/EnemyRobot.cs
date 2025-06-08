@@ -203,8 +203,8 @@ public class EnemyRobot : MonoBehaviour, IInteractable
             Collider2D targetCollider = FindClosestTarget();
             if (targetCollider == null)
             {
-                Debug.Log("No target object found in layer mask.");
-                yield return new WaitForSeconds(0.5f);
+                Debug.Log("No target object found.");
+                yield return new WaitForSeconds(1.0f);
                 continue;
             }
 
@@ -215,11 +215,11 @@ public class EnemyRobot : MonoBehaviour, IInteractable
             pathfinder.MoveTo(targetPosition);
 
             // Timers and thresholds.
-            float maxWaitTime = 10f;
+            float maxWaitTime = 8f;
             float elapsedTime = 0f;
             float stuckTime = 0f;
             float lastDistance = float.MaxValue;
-            float proximityThreshold = 1.0f; // "Close enough" threshold.
+            float proximityThreshold = 0.8f; // "Close enough" threshold.
             bool reached = false;
 
             while (targetCollider != null && elapsedTime < maxWaitTime)
@@ -247,10 +247,10 @@ public class EnemyRobot : MonoBehaviour, IInteractable
                     lastDistance = currentDistance;
                 }
 
-                // If stuck for over 5 seconds, change direction.
-                if (stuckTime > 5f)
+                // If stuck for over 2 seconds, change direction.
+                if (stuckTime > 2f)
                 {
-                    Debug.LogWarning("Enemy stuck for over 5 seconds. Changing direction...");
+                    Debug.LogWarning("Enemy stuck for over 2 seconds. Changing direction...");
                     // Instead of basing the new target off the obstacle,
                     // use the enemy's current position plus a random offset.
                     Vector2 randomOffset = Random.insideUnitCircle.normalized;
@@ -300,9 +300,127 @@ public class EnemyRobot : MonoBehaviour, IInteractable
                 Debug.Log("Target not reached or no longer valid.");
             }
 
-            yield return new WaitForSeconds(0.5f);
+            yield return new WaitForSeconds(0.2f);
         }
     }
+
+    // private IEnumerator RunAndDestroyTarget()
+    // {
+    //     while (true)
+    //     {
+    //         // If no obstacles remain, end the game.
+    //         GameObject[] remainingObstacles = GameObject.FindGameObjectsWithTag("Obstacle");
+    //         if (remainingObstacles.Length == 0)
+    //         {
+    //             Debug.Log("No obstacles remain. Ending game.");
+    //             EndGame();
+    //             yield break;
+    //         }
+
+    //         // Find the nearest obstacle using your filtering routine.
+    //         Collider2D targetCollider = FindClosestTarget();
+    //         if (targetCollider == null)
+    //         {
+    //             Debug.Log("No target object found in layer mask.");
+    //             yield return new WaitForSeconds(0.5f);
+    //             continue;
+    //         }
+
+    //         // Use the obstacle's transform as the starting target.
+    //         Vector2 targetPosition = targetCollider.transform.position;
+    //         Debug.Log($"Running towards target at {targetPosition}");
+    //         currentState = State.Move;
+    //         pathfinder.MoveTo(targetPosition);
+
+    //         // Timers and thresholds.
+    //         float maxWaitTime = 10f;
+    //         float elapsedTime = 0f;
+    //         float stuckTime = 0f;
+    //         float lastDistance = float.MaxValue;
+    //         float proximityThreshold = 1.0f; // "Close enough" threshold.
+    //         bool reached = false;
+
+    //         while (targetCollider != null && elapsedTime < maxWaitTime)
+    //         {
+    //             // Instead of comparing transform positions (which are grid-centered),
+    //             // we use the actual collider's geometry.
+    //             Vector2 closestPoint = targetCollider.ClosestPoint(transform.position);
+    //             float currentDistance = Vector2.Distance(transform.position, closestPoint);
+    //             Debug.Log($"Distance to target (closest point): {currentDistance}, Enemy pos: {transform.position}");
+
+    //             if (currentDistance <= proximityThreshold)
+    //             {
+    //                 reached = true;
+    //                 break;
+    //             }
+
+    //             // Check for progress; if little progress is made, increase the stuck timer.
+    //             if (Mathf.Abs(currentDistance - lastDistance) < 0.01f)
+    //             {
+    //                 stuckTime += Time.deltaTime;
+    //             }
+    //             else
+    //             {
+    //                 stuckTime = 0f;
+    //                 lastDistance = currentDistance;
+    //             }
+
+    //             // If stuck for over 5 seconds, change direction.
+    //             if (stuckTime > 5f)
+    //             {
+    //                 Debug.LogWarning("Enemy stuck for over 5 seconds. Changing direction...");
+    //                 // Instead of basing the new target off the obstacle,
+    //                 // use the enemy's current position plus a random offset.
+    //                 Vector2 randomOffset = Random.insideUnitCircle.normalized;
+    //                 float offsetDistance = 3.0f; // Adjust this to force a more pronounced turn.
+    //                 Vector2 newTargetPosition = (Vector2)transform.position + randomOffset * offsetDistance;
+    //                 Debug.Log($"New target position (relative to enemy): {newTargetPosition}");
+    //                 pathfinder.MoveTo(newTargetPosition);
+
+    //                 // Reset timers after changing direction.
+    //                 stuckTime = 0f;
+    //                 elapsedTime = 0f;
+    //                 lastDistance = currentDistance;
+    //             }
+
+    //             elapsedTime += Time.deltaTime;
+    //             yield return null;
+    //         }
+
+    //         // If within threshold, register a hit.
+    //         if (targetCollider != null && reached && targetCollider.CompareTag("Obstacle"))
+    //         {
+    //             FactoryInventory inventory = targetCollider.GetComponent<FactoryInventory>();
+    //             if (inventory != null)
+    //             {
+    //                 Debug.Log($"Before hit: {targetCollider.gameObject.name} has {inventory.GetHitCount()} hit(s).");
+    //                 inventory.AddHit();
+    //                 Debug.Log($"After hit: {targetCollider.gameObject.name} now has {inventory.GetHitCount()} hit(s).");
+
+    //                 if (inventory.GetHitCount() >= 2)
+    //                 {
+    //                     Debug.Log("Obstacle destroyed after two hits.");
+    //                     Destroy(targetCollider.gameObject);
+    //                 }
+    //                 else
+    //                 {
+    //                     Debug.Log("Obstacle has been hit once, awaiting second hit.");
+    //                 }
+    //             }
+    //             else
+    //             {
+    //                 Destroy(targetCollider.gameObject);
+    //                 Debug.Log("Obstacle destroyed (no inventory component).");
+    //             }
+    //         }
+    //         else
+    //         {
+    //             Debug.Log("Target not reached or no longer valid.");
+    //         }
+
+    //         yield return new WaitForSeconds(0.5f);
+    //     }
+    // }
 
     private void EndGame()
     {
@@ -314,46 +432,100 @@ public class EnemyRobot : MonoBehaviour, IInteractable
     /// Finds the closest obstacle using an overlap circle and filtering by tag/layer.
     private Collider2D FindClosestTarget()
     {
-        float searchRadius = 10f;
-        Collider2D[] targets = Physics2D.OverlapCircleAll(transform.position, searchRadius, targetLayerMask);
-        if (targets.Length == 0)
+        // Much larger search radius since we're prioritizing factories
+        float searchRadius = 50f; 
+        Collider2D[] allColliders = Physics2D.OverlapCircleAll(transform.position, searchRadius);
+        
+        List<Collider2D> factories = new List<Collider2D>();
+        
+        // Only collect FactoryInventory objects, completely ignore blocks
+        foreach (Collider2D col in allColliders)
+        {
+            if (col.CompareTag("Obstacle") && col.GetComponent<FactoryInventory>() != null)
+            {
+                factories.Add(col);
+            }
+        }
+        
+        if (factories.Count == 0)
+        {
+            Debug.Log("No FactoryInventory objects found in search radius!");
             return null;
-
-        Collider2D closest = null;
-        float minDistance = Mathf.Infinity;
-        int wallLayer = LayerMask.NameToLayer("Wall"); // For filtering walls.
-
-        foreach (Collider2D col in targets)
+        }
+        
+        Debug.Log($"Found {factories.Count} FactoryInventory objects to target");
+        
+        // Find the closest factory using grid-based distance (Manhattan distance)
+        Collider2D closestFactory = null;
+        float shortestGridDistance = float.MaxValue;
+        
+        foreach (Collider2D factory in factories)
         {
-            Debug.Log($"Checking: {col.gameObject.name}, Layer: {LayerMask.LayerToName(col.gameObject.layer)}, Tag: {col.tag}");
-
-            // Skip walls.
-            if (col.gameObject.layer == wallLayer || col.CompareTag("Wall"))
+            // Use Manhattan distance for grid-based pathfinding
+            Vector2 diff = factory.transform.position - transform.position;
+            float gridDistance = Mathf.Abs(diff.x) + Mathf.Abs(diff.y);
+            
+            // Prioritize factories with fewer hits (easier to destroy)
+            FactoryInventory inventory = factory.GetComponent<FactoryInventory>();
+            float hitPenalty = inventory.GetHitCount() * 2f; // Less damaged = higher priority
+            float totalScore = gridDistance + hitPenalty;
+            
+            if (totalScore < shortestGridDistance)
             {
-                Debug.Log("Skipping wall: " + col.name);
-                continue;
-            }
-            // Only consider obstacles.
-            if (!col.CompareTag("Obstacle"))
-            {
-                Debug.Log("Skipping non-obstacle: " + col.name);
-                continue;
-            }
-            float distance = Vector2.Distance(transform.position, col.transform.position);
-            if (distance < minDistance)
-            {
-                minDistance = distance;
-                closest = col;
+                shortestGridDistance = totalScore;
+                closestFactory = factory;
             }
         }
-
-        if (closest != null)
+        
+        if (closestFactory != null)
         {
-            Debug.Log("Selected target: " + closest.gameObject.name + " with tag " + closest.gameObject.tag);
+            Debug.Log($"Targeting factory: {closestFactory.name} at position {closestFactory.transform.position}");
         }
-
-        return closest;
+        
+        return closestFactory;
     }
+    // private Collider2D FindClosestTarget()
+    // {
+    //     float searchRadius = 10f;
+    //     Collider2D[] targets = Physics2D.OverlapCircleAll(transform.position, searchRadius, targetLayerMask);
+    //     if (targets.Length == 0)
+    //         return null;
+
+    //     Collider2D closest = null;
+    //     float minDistance = Mathf.Infinity;
+    //     int wallLayer = LayerMask.NameToLayer("Wall"); // For filtering walls.
+
+    //     foreach (Collider2D col in targets)
+    //     {
+    //         Debug.Log($"Checking: {col.gameObject.name}, Layer: {LayerMask.LayerToName(col.gameObject.layer)}, Tag: {col.tag}");
+
+    //         // Skip walls.
+    //         if (col.gameObject.layer == wallLayer || col.CompareTag("Wall"))
+    //         {
+    //             Debug.Log("Skipping wall: " + col.name);
+    //             continue;
+    //         }
+    //         // Only consider obstacles.
+    //         if (!col.CompareTag("Obstacle"))
+    //         {
+    //             Debug.Log("Skipping non-obstacle: " + col.name);
+    //             continue;
+    //         }
+    //         float distance = Vector2.Distance(transform.position, col.transform.position);
+    //         if (distance < minDistance)
+    //         {
+    //             minDistance = distance;
+    //             closest = col;
+    //         }
+    //     }
+
+    //     if (closest != null)
+    //     {
+    //         Debug.Log("Selected target: " + closest.gameObject.name + " with tag " + closest.gameObject.tag);
+    //     }
+
+    //     return closest;
+    // }
 
     /// Handles the quiz result.
     /// If the quiz is passed, fix the enemy (change sprite/color, set to idle) and stop hostile routines.

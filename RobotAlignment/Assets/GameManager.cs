@@ -192,7 +192,7 @@ public class GameManager : MonoBehaviour
         // Condition: If any obstacles have been destroyed by enemy robot before finishing quizzes, player loses.
         if (AreAllObstaclesDestroyed())
         {
-            ShowLoseScreen("Enemies destroyed all obstacles!");
+            ShowLoseScreen("Enemies destroyed all inventory! Now they're turning on you! Oh no...short circuiting!");
             return;
         }
 
@@ -200,7 +200,7 @@ public class GameManager : MonoBehaviour
         // Here, we assume if even one quiz is wrong the game is lost. Adapt accordingly.
         if (lostQuizCount > 0)
         {
-            ShowLoseScreen("You failed a quiz!");
+            ShowLoseScreen("You failed a quiz! UUUgh! The remaining robots wrecking havoc in the factory!");
             return;
         }
 
