@@ -20,6 +20,10 @@ MonoBehaviour:
   answers: 010001
   timeLimit: 20
   correctAnswers:
-  - null
+  - Reinforcement Learning (RL) is a type of machine learning where an agent learns
+    to make decisions by performing actions and receiving rewards or penalties from
+    its environment. The goal is to maximize total rewards over time.
   - In the resource, the Blackjack agent was trained using a value-based method (Q-learning).
-  - null
+  - Goal Misgeneralization (GMG) occurs when an RL agent competently achieves a goal
+    that's correlated with, but different from, the intended objective. This because
+    the agent has mastered achieving this reward, just not necessarily correctly.

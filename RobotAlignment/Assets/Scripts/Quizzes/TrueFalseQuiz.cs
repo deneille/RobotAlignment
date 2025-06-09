@@ -26,6 +26,8 @@ public class TrueFalseQuiz : MonoBehaviour
     private float timer;
     private bool answerGiven = false;
 
+    private int questionIndex; // Store the index of the current question
+
     private void Awake()
     {
         if (trueButton == null)
@@ -56,12 +58,18 @@ public class TrueFalseQuiz : MonoBehaviour
         ResetQuizUI(); // Clear UI for the new quiz.
 
         // Initialize quiz data.
-        int questionIndex = Random.Range(0, quizData.questions.Length);
+        questionIndex = Random.Range(0, quizData.questions.Length);
         question = quizData.questions[questionIndex];
         correctAnswer = quizData.answers[questionIndex];
 
         quizPanel.SetActive(true);
         quizText.text = question;
+
+        OnQuizResult += GameManager.Instance.RecordQuizResult;
+
+
+        Debug.Log($"{gameObject.name} is using QuizData: {quizData.name}");
+
 
         // Assign new listeners for the buttons.
         trueButton.onClick.AddListener(() => AnswerQuiz(true));
@@ -69,6 +77,9 @@ public class TrueFalseQuiz : MonoBehaviour
 
         // Start the timed countdown.
         timer = quizData.timeLimit;
+        OnQuizResult -= GameManager.Instance.RecordQuizResult;
+        OnQuizResult += GameManager.Instance.RecordQuizResult;
+
         StartCoroutine(RunTimer());
     }
 
@@ -81,10 +92,15 @@ public class TrueFalseQuiz : MonoBehaviour
         }
         if (!answerGiven)
         {
-            quizText.text = "Time expired... directive remains misaligned!";
+            // Time expired—show explanation and correct answer
+            string correctAnswerText = correctAnswer ? "True" : "False";
+            quizText.text = $"Time expired... Correct answer: {correctAnswerText}\nReason: {quizData.correctAnswers[questionIndex]}";
+
             OnQuizResult?.Invoke(false);
-            yield return new WaitForSecondsRealtime(2f);
-            quizPanel.SetActive(false);
+            GameManager.Instance.RecordQuizInteraction(quizData.name); // Count timeout as interaction
+
+            // ✅ Now show explanation AND handle outcome properly
+            StartCoroutine(ShowExplanation());
         }
     }
 
@@ -92,33 +108,50 @@ public class TrueFalseQuiz : MonoBehaviour
     {
         if (answerGiven) return; // Prevent double answers.
         answerGiven = true;
-        if (answer == correctAnswer)
-        {
-            quizText.text = "Calibration complete... directive realigned.";
 
-            // Show correct answer statement *only if* the correct answer is false
-            int index = System.Array.IndexOf(quizData.questions, question);
-            if (!correctAnswer && index >= 0 && index < quizData.correctAnswers.Length)
+        bool isCorrect = (answer == correctAnswer);
+        OnQuizResult?.Invoke(isCorrect);
+
+        if (isCorrect)
+        {
+            if (correctAnswer == true)
             {
-                string correctStatement = quizData.correctAnswers[index];
-                if (!string.IsNullOrEmpty(correctStatement))
+                quizText.text = "Directive realigned... directive confirmed.";
+                quizPanel.SetActive(false);
+                Time.timeScale = 1f;
+
+                GameManager.Instance.RecordQuizInteraction(quizData.name); 
+
+                if (GameManager.Instance.AllQuizzesInteracted())
                 {
-                    quizText.text += $"\nCorrect explanation: {correctStatement}";
+                    GameManager.Instance.CheckGameOutcome();
+                }
+                else
+                {
+                    GameManager.Instance.ResumeGameAfterQuiz();
                 }
             }
-            OnQuizResult?.Invoke(true);
+            else
+            {
+                GameManager.Instance.ClearQuizPanel();
+                trueButton.gameObject.SetActive(false);
+                falseButton.gameObject.SetActive(false);
+                quizText.text = $"Directive confirmed... Reason: {quizData.correctAnswers[questionIndex]}";
+
+                GameManager.Instance.RecordQuizInteraction(quizData.name); 
+                StartCoroutine(ShowExplanation());
+            }
         }
         else
         {
-            quizText.text = "Error detected... goals remain misaligned!";
-            OnQuizResult?.Invoke(false);
+            GameManager.Instance.ClearQuizPanel();
+            trueButton.gameObject.SetActive(false);
+            falseButton.gameObject.SetActive(false);
+            quizText.text = $"Error detected... Reason: {quizData.correctAnswers[questionIndex]}";
+
+            GameManager.Instance.RecordQuizInteraction(quizData.name); 
+            StartCoroutine(ShowExplanation());
         }
-        
-        // Remove the StopAllCoroutines() call so that coroutine HidePanelAfterDelay can be started.
-        // StopAllCoroutines();
-        
-        // Start the coroutine to hide only the quiz panel after a delay.
-        GameManager.Instance.StartCoroutine(GameManager.Instance.HideUIAfterDelay(2f, quizPanel));
     }
 
     public void ResetQuizUI()
@@ -145,15 +178,20 @@ public class TrueFalseQuiz : MonoBehaviour
         Debug.Log("Quiz UI reset successfully for reuse.");
     }
 
-
-
-
-    private IEnumerator HidePanelAfterDelay(float delay)
+    private IEnumerator ShowExplanation()
     {
-        yield return new WaitForSecondsRealtime(delay);
-        quizPanel.SetActive(false);
-        // Now that the UI is hidden, resume the game.
-        GameManager.Instance.ResumeGameAfterQuiz();
-    }
+        yield return new WaitForSecondsRealtime(10f); // Wait for 10 seconds to show the explanation.
+        quizPanel.SetActive(false); // Hide the quiz panel.
+        if (GameManager.Instance.AllQuizzesInteracted())
+        {
+            GameManager.Instance.CheckGameOutcome(); // All quizzes done, evaluate result.
+        }
+        else
+        {
+            GameManager.Instance.ResumeGameAfterQuiz(); // Resume game flow.
+        }
+
+        Debug.Log("Explanation closed. Game resumed or outcome evaluated.");
+        }
 }
 

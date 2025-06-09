@@ -1,6 +1,7 @@
 using System.Collections;
 using UnityEngine;
 using TMPro;
+using UnityEngine.UI;
 
 public class GameIntroDialogue : MonoBehaviour
 {
@@ -10,6 +11,8 @@ public class GameIntroDialogue : MonoBehaviour
     // The text component that displays your rules
     public TextMeshProUGUI introDialogueText;
 
+    public Button skipButton; // Optional: Button to skip the dialogue
+
     [Header("Dialogue Settings")]
     // The rules text that explains how to win and lose.
     [TextArea(3, 10)]
@@ -17,8 +20,25 @@ public class GameIntroDialogue : MonoBehaviour
     // How long to keep the dialogue on screen (in seconds)
     public float dialogueDuration = 10f;
 
+    private bool isDialogueSkipped = false;
+
     private void Start()
     {
+        if (skipButton != null)
+        {
+            skipButton.onClick.AddListener(() =>
+            {
+                isDialogueSkipped = true;
+                StopAllCoroutines(); // Stop the dialogue coroutine if it's running
+                introDialoguePanel.SetActive(false); // Hide the dialogue panel
+                Time.timeScale = 1f; // Resume the game
+                Debug.Log("Dialogue skipped. Game resumed.");
+            });
+        }
+        else
+        {
+            Debug.LogWarning("Skip Button is not assigned. Skipping functionality will not be available.");
+        }
         // Start the intro dialogue when the scene begins.
         StartCoroutine(ShowIntroDialogue());
     }

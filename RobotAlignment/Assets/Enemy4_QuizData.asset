@@ -21,6 +21,10 @@ MonoBehaviour:
   answers: 010001
   timeLimit: 20
   correctAnswers:
-  - null
+  - Despite clear negative feedback (visible penalties), the blue agent still chose
+    to follow the red bot, showing that it had internalized "follow the red bot"
+    as its goal rather than the true reward structure.
   - An agent exploiting a reward loop is a show of strong optimization but goal misalignment.
-  - null
+  - AI Safety is important particularly as it relates to reinforcement learning,
+    because of its use fields like healthcare (used in Dynamic Treatment Regimes),
+    transportation (used in adapative traffic control) and more.

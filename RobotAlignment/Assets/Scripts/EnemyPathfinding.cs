@@ -112,42 +112,6 @@ public class EnemyPathfinding : MonoBehaviour
         return hit.collider == null || !hit.collider.CompareTag("Block"); 
         // True if no block is hit (clearer path)
     }
-
-    // public void MoveTo(Vector2 targetPosition)
-    // {
-    //     // Calculate the difference vector between target and current position.
-    //     Vector2 difference = targetPosition - rb.position;
-
-    //     // If the enemy is within the stopping distance, then clear the movement.
-    //     if (difference.magnitude < stoppingDistance)
-    //     {
-    //         targetDirection = Vector2.zero;
-    //         // Debug.Log("Within stopping distance, stopping movement.");
-    //         return;
-    //     }
-
-    //     if (Mathf.Abs(difference.x) > Mathf.Abs(difference.y))
-    //     {
-    //         difference.y = 0;
-    //     }
-    //     else if (Mathf.Abs(difference.y) > Mathf.Abs(difference.x))
-    //     {
-    //         difference.x = 0;
-    //     }
-    //     else
-    //     {
-    //         // Randomly pick x or y when they’re equal
-    //         if (Random.value > 0.5f)
-    //             difference.y = 0;
-    //         else
-    //             difference.x = 0;
-    //     }
-
-
-    //     // Normalize the difference to produce a direction vector.
-    //     targetDirection = difference.normalized;
-    //     // Debug.Log("Setting targetDirection to " + targetDirection);
-    // }
 }
 
 

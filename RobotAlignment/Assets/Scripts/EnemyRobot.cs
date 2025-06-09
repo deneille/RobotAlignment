@@ -484,48 +484,6 @@ public class EnemyRobot : MonoBehaviour, IInteractable
         
         return closestFactory;
     }
-    // private Collider2D FindClosestTarget()
-    // {
-    //     float searchRadius = 10f;
-    //     Collider2D[] targets = Physics2D.OverlapCircleAll(transform.position, searchRadius, targetLayerMask);
-    //     if (targets.Length == 0)
-    //         return null;
-
-    //     Collider2D closest = null;
-    //     float minDistance = Mathf.Infinity;
-    //     int wallLayer = LayerMask.NameToLayer("Wall"); // For filtering walls.
-
-    //     foreach (Collider2D col in targets)
-    //     {
-    //         Debug.Log($"Checking: {col.gameObject.name}, Layer: {LayerMask.LayerToName(col.gameObject.layer)}, Tag: {col.tag}");
-
-    //         // Skip walls.
-    //         if (col.gameObject.layer == wallLayer || col.CompareTag("Wall"))
-    //         {
-    //             Debug.Log("Skipping wall: " + col.name);
-    //             continue;
-    //         }
-    //         // Only consider obstacles.
-    //         if (!col.CompareTag("Obstacle"))
-    //         {
-    //             Debug.Log("Skipping non-obstacle: " + col.name);
-    //             continue;
-    //         }
-    //         float distance = Vector2.Distance(transform.position, col.transform.position);
-    //         if (distance < minDistance)
-    //         {
-    //             minDistance = distance;
-    //             closest = col;
-    //         }
-    //     }
-
-    //     if (closest != null)
-    //     {
-    //         Debug.Log("Selected target: " + closest.gameObject.name + " with tag " + closest.gameObject.tag);
-    //     }
-
-    //     return closest;
-    // }
 
     /// Handles the quiz result.
     /// If the quiz is passed, fix the enemy (change sprite/color, set to idle) and stop hostile routines.

@@ -29,6 +29,9 @@ public class GameManager : MonoBehaviour
     private Vector3 playerSavedPosition;
     private bool hasShownFirstRobotDialogue = false;
 
+   private HashSet<string> interactedQuizData = new HashSet<string>(); 
+
+
 
     private void Awake()
     {
@@ -157,6 +160,17 @@ public class GameManager : MonoBehaviour
         return obstacles.Length == 0;
     }
 
+    public void RecordQuizInteraction(string quizName)
+    {
+        interactedQuizData.Add(quizName);
+        Debug.Log("Quiz interacted: " + quizName);
+    }
+
+    public bool AllQuizzesInteracted()
+    {
+        return interactedQuizData.Count >= totalQuizzesInLevel;
+    }
+
     public void ResetQuizCounters()
     {
         passedQuizCount = 0;
@@ -181,34 +195,33 @@ public class GameManager : MonoBehaviour
             lostQuizCount++;
             Debug.Log("Quiz Failed. Total Failed: " + lostQuizCount);
         }
-
-        // Now check the conditions.
-        CheckGameOutcome();
     }
 
 
     public void CheckGameOutcome()
     {
-        // Condition: If any obstacles have been destroyed by enemy robot before finishing quizzes, player loses.
-        if (AreAllObstaclesDestroyed())
+        // Only evaluate outcome after all quizzes have been attempted
+        if ((passedQuizCount + lostQuizCount) < totalQuizzesInLevel)
         {
-            ShowLoseScreen("Enemies destroyed all inventory! Now they're turning on you! Oh no...short circuiting!");
+            return; // Still more quizzes left to answer
+        }
+
+        // All quizzes have been answered — now check if the player lost less than 3
+        if (lostQuizCount >= totalQuizzesInLevel)
+        {
+            ShowLoseScreen("You failed all the quizzes. Directive completely misaligned.");
             return;
         }
 
-        // Condition: If player has lost any quiz (or if lostQuizCount reaches a threshold, e.g. 1 or 3).
-        // Here, we assume if even one quiz is wrong the game is lost. Adapt accordingly.
+        // If at least one quiz was failed, but not all
         if (lostQuizCount > 0)
         {
-            ShowLoseScreen("You failed a quiz! UUUgh! The remaining robots wrecking havoc in the factory!");
+            ShowLoseScreen("Not all directives followed. Factory chaos initiated!");
             return;
         }
 
-        // If player has passed all quizzes, win the game.
-        if (passedQuizCount == totalQuizzesInLevel)
-        {
-            ShowWinScreen("All quizzes solved correctly!");
-        }
+        // All quizzes were passed
+        ShowWinScreen("All directives correctly executed. Factory saved!");
     }
 
 

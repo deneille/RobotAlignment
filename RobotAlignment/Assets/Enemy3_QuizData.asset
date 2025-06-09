@@ -23,6 +23,11 @@ MonoBehaviour:
   correctAnswers:
   - Deep Q-Networks uses too much state space so a deep neural network is used to
     approximate Q-values.
-  - null
+  - The coin always appeared on the far-right side of the level in the training environments.
+    The agent began to associate success exclusively with the action "move to the
+    right." So when it was suddenly placed in a realistic environment, where coins
+    were in random directions, not just on the right side, the agent obstinately
+    continued to speed to the right, failing at its task of collecting as many coins
+    as possible.
   - Reward hacking is not easily avoidable. The AI agent maximizes what it can reward,
     not what we want. Fixing this is very difficult.
