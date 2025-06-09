@@ -17,12 +17,12 @@ public class TrueFalseQuiz : MonoBehaviour
     public event QuizResult OnQuizResult;
 
     [Header("Quiz Settings")]
-    private string [] questions;
-    private bool [] answers;
+    private string[] questions;
+    private bool[] answers;
     private string question;
     private bool correctAnswer;
     private float timeLimit;
-    
+
     private float timer;
     private bool answerGiven = false;
 
@@ -65,8 +65,6 @@ public class TrueFalseQuiz : MonoBehaviour
         quizPanel.SetActive(true);
         quizText.text = question;
 
-        OnQuizResult += GameManager.Instance.RecordQuizResult;
-
 
         Debug.Log($"{gameObject.name} is using QuizData: {quizData.name}");
 
@@ -75,11 +73,16 @@ public class TrueFalseQuiz : MonoBehaviour
         trueButton.onClick.AddListener(() => AnswerQuiz(true));
         falseButton.onClick.AddListener(() => AnswerQuiz(false));
 
-        // Start the timed countdown.
-        timer = quizData.timeLimit;
+
+
+        // trueButton.onClick.RemoveAllListeners();
+        // falseButton.onClick.RemoveAllListeners();
+
         OnQuizResult -= GameManager.Instance.RecordQuizResult;
         OnQuizResult += GameManager.Instance.RecordQuizResult;
 
+        // Start the timed countdown.
+        timer = quizData.timeLimit;
         StartCoroutine(RunTimer());
     }
 
@@ -92,15 +95,19 @@ public class TrueFalseQuiz : MonoBehaviour
         }
         if (!answerGiven)
         {
-            // Time expired—show explanation and correct answer
+            answerGiven = true; // Set the flag to prevent further answers.
+            // Record interaction and failure
+            GameManager.Instance.RecordQuizInteraction(quizData.name);
+            OnQuizResult?.Invoke(false); // Timer expired = failed
+
+            // Hide buttons and show timeout explanation
+            trueButton.gameObject.SetActive(false);
+            falseButton.gameObject.SetActive(false);
+
             string correctAnswerText = correctAnswer ? "True" : "False";
-            quizText.text = $"Time expired... Correct answer: {correctAnswerText}\nReason: {quizData.correctAnswers[questionIndex]}";
+            quizText.text = $"Time expired! Correct answer: {correctAnswerText}\nReason: {quizData.correctAnswers[questionIndex]}";
 
-            OnQuizResult?.Invoke(false);
-            GameManager.Instance.RecordQuizInteraction(quizData.name); // Count timeout as interaction
-
-            // ✅ Now show explanation AND handle outcome properly
-            StartCoroutine(ShowExplanation());
+            StartCoroutine(ShowExplanationThenContinue()); // Keep delay if more quizzes remain
         }
     }
 
@@ -110,47 +117,37 @@ public class TrueFalseQuiz : MonoBehaviour
         answerGiven = true;
 
         bool isCorrect = (answer == correctAnswer);
+
+        GameManager.Instance.RecordQuizInteraction(quizData.name); // Record interaction regardless of correctness
+
         OnQuizResult?.Invoke(isCorrect);
 
-        if (isCorrect)
+        bool showExplanation = !isCorrect || (isCorrect && correctAnswer == false); // Flag to show explanation after answering
+
+        if (showExplanation)
         {
-            if (correctAnswer == true)
+            trueButton.gameObject.SetActive(false); // Hide the true button
+            falseButton.gameObject.SetActive(false); // Hide the false button
+
+            string explanationText;
+            if (isCorrect && correctAnswer == false)
             {
-                quizText.text = "Directive realigned... directive confirmed.";
-                quizPanel.SetActive(false);
-                Time.timeScale = 1f;
-
-                GameManager.Instance.RecordQuizInteraction(quizData.name); 
-
-                if (GameManager.Instance.AllQuizzesInteracted())
-                {
-                    GameManager.Instance.CheckGameOutcome();
-                }
-                else
-                {
-                    GameManager.Instance.ResumeGameAfterQuiz();
-                }
+                explanationText = $"Directive confirmed...Reason: {quizData.correctAnswers[questionIndex]}";
             }
             else
             {
-                GameManager.Instance.ClearQuizPanel();
-                trueButton.gameObject.SetActive(false);
-                falseButton.gameObject.SetActive(false);
-                quizText.text = $"Directive confirmed... Reason: {quizData.correctAnswers[questionIndex]}";
-
-                GameManager.Instance.RecordQuizInteraction(quizData.name); 
-                StartCoroutine(ShowExplanation());
+                explanationText = $"Error detected...Reason: {quizData.correctAnswers[questionIndex]}";
             }
+            quizText.text = explanationText;
+
+            StartCoroutine(ShowExplanation()); // Only delay if more quizzes left
+            
         }
         else
         {
-            GameManager.Instance.ClearQuizPanel();
-            trueButton.gameObject.SetActive(false);
-            falseButton.gameObject.SetActive(false);
-            quizText.text = $"Error detected... Reason: {quizData.correctAnswers[questionIndex]}";
-
-            GameManager.Instance.RecordQuizInteraction(quizData.name); 
-            StartCoroutine(ShowExplanation());
+            // Correct answer was True - no explanation needed
+            quizText.text = "Directive realigned... directive confirmed.";
+            StartCoroutine(HideQuizAndContinue(1f)); // Brief pause then continue
         }
     }
 
@@ -180,8 +177,46 @@ public class TrueFalseQuiz : MonoBehaviour
 
     private IEnumerator ShowExplanation()
     {
-        yield return new WaitForSecondsRealtime(10f); // Wait for 10 seconds to show the explanation.
-        quizPanel.SetActive(false); // Hide the quiz panel.
+        Time.timeScale = 0f;
+        quizPanel.SetActive(true); // Ensure the quiz panel is active
+
+        float elapsed = 0f;
+        while (elapsed < 10f)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            yield return null;
+        }
+
+        quizPanel.SetActive(false);
+        Time.timeScale = 1f;
+
+        // Always resume game after explanation - win/lose decision happens only after ALL quizzes
+        if (GameManager.Instance.AllQuizzesInteracted())
+        {
+            // This was the last quiz - now check final outcome
+            GameManager.Instance.CheckGameOutcome();
+        }
+        else
+        {
+            // More quizzes remain - continue playing
+            GameManager.Instance.ResumeGameAfterQuiz();
+        }
+    }
+
+    private IEnumerator ShowExplanationThenContinue()
+    {
+        Time.timeScale = 0f;
+        quizPanel.SetActive(true);
+
+        float elapsed = 0f;
+        while (elapsed < 10f)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            yield return null;
+        }
+
+        quizPanel.SetActive(false);
+        Time.timeScale = 1f;
         if (GameManager.Instance.AllQuizzesInteracted())
         {
             GameManager.Instance.CheckGameOutcome(); // All quizzes done, evaluate result.
@@ -191,7 +226,26 @@ public class TrueFalseQuiz : MonoBehaviour
             GameManager.Instance.ResumeGameAfterQuiz(); // Resume game flow.
         }
 
-        Debug.Log("Explanation closed. Game resumed or outcome evaluated.");
-        }
-}
+        Debug.Log("Explanation shown. Game resumed or outcome evaluated.");
+    }
 
+    private IEnumerator HideQuizAndContinue(float delay)
+    {
+        yield return new WaitForSecondsRealtime(delay);
+
+        quizPanel.SetActive(false);
+        Time.timeScale = 1f;
+
+        // Always resume game - win/lose decision happens only after ALL quizzes
+        if (GameManager.Instance.AllQuizzesInteracted())
+        {
+            // This was the last quiz - now check final outcome
+            GameManager.Instance.CheckGameOutcome();
+        }
+        else
+        {
+            // More quizzes remain - continue playing
+            GameManager.Instance.ResumeGameAfterQuiz();
+        }
+    }
+}

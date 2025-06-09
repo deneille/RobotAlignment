@@ -325,6 +325,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 4397921952271118311, guid: 1b1c876e8d3f3424ea23bd6e82e2d0f3, type: 3}
+      propertyPath: m_Name
+      value: QuizType1
+      objectReference: {fileID: 0}
     - target: {fileID: 5558824951595616482, guid: 1b1c876e8d3f3424ea23bd6e82e2d0f3, type: 3}
       propertyPath: m_Name
       value: Enemy Robot (2)
@@ -641,6 +645,7 @@ MonoBehaviour:
   maxHealth: 3
   currentHealth: 0
   healthBarFill: {fileID: 0}
+  totalHealthBar: {fileID: 0}
 --- !u!1 &216239873
 GameObject:
   m_ObjectHideFlags: 0
@@ -7143,6 +7148,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 4397921952271118311, guid: 1b1c876e8d3f3424ea23bd6e82e2d0f3, type: 3}
+      propertyPath: m_Name
+      value: QuizType3
+      objectReference: {fileID: 0}
     - target: {fileID: 5558824951595616482, guid: 1b1c876e8d3f3424ea23bd6e82e2d0f3, type: 3}
       propertyPath: m_Name
       value: Enemy Robot (1)
@@ -7787,6 +7796,10 @@ PrefabInstance:
     - target: {fileID: 4014920890736191381, guid: 1b1c876e8d3f3424ea23bd6e82e2d0f3, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4397921952271118311, guid: 1b1c876e8d3f3424ea23bd6e82e2d0f3, type: 3}
+      propertyPath: m_Name
+      value: QuizType4
       objectReference: {fileID: 0}
     - target: {fileID: 5558824951595616482, guid: 1b1c876e8d3f3424ea23bd6e82e2d0f3, type: 3}
       propertyPath: m_Name

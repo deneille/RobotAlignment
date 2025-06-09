@@ -160,10 +160,21 @@ public class GameManager : MonoBehaviour
         return obstacles.Length == 0;
     }
 
+    public void CheckObstaclesAndForceLose()
+    {
+        if (AreAllObstaclesDestroyed() && !AllQuizzesInteracted())
+        {
+            ShowLoseScreen("All obstacles were destroyed before all directives were followed. Factory meltdown.");
+        }
+    }
+
     public void RecordQuizInteraction(string quizName)
     {
-        interactedQuizData.Add(quizName);
-        Debug.Log("Quiz interacted: " + quizName);
+        if (!interactedQuizData.Contains(quizName))
+        {
+            interactedQuizData.Add(quizName);
+            Debug.Log("Quiz interacted: " + quizName);
+        }
     }
 
     public bool AllQuizzesInteracted()
@@ -176,6 +187,7 @@ public class GameManager : MonoBehaviour
         passedQuizCount = 0;
         lostQuizCount = 0;
         hasShownFirstRobotDialogue = false;
+        interactedQuizData.Clear(); 
         Debug.Log("Quiz counters reset.");
     }
 
@@ -200,28 +212,38 @@ public class GameManager : MonoBehaviour
 
     public void CheckGameOutcome()
     {
+        Debug.Log($"[CheckGameOutcome] Interacted: {interactedQuizData.Count}, Passed: {passedQuizCount}, Lost: {lostQuizCount}, Total Required: {totalQuizzesInLevel}");
         // Only evaluate outcome after all quizzes have been attempted
-        if ((passedQuizCount + lostQuizCount) < totalQuizzesInLevel)
+        if (!AllQuizzesInteracted())
         {
             return; // Still more quizzes left to answer
-        }
-
-        // All quizzes have been answered — now check if the player lost less than 3
-        if (lostQuizCount >= totalQuizzesInLevel)
-        {
-            ShowLoseScreen("You failed all the quizzes. Directive completely misaligned.");
-            return;
         }
 
         // If at least one quiz was failed, but not all
         if (lostQuizCount > 0)
         {
-            ShowLoseScreen("Not all directives followed. Factory chaos initiated!");
-            return;
+            ShowLoseScreen("Not all directives followed. Factory chaos initiated! Factory meltdown.");
         }
+        else
+        {
+            // All quizzes were passed
+            ShowWinScreen("All directives correctly executed. Factory saved!");
+        }
+       
+    }
 
-        // All quizzes were passed
-        ShowWinScreen("All directives correctly executed. Factory saved!");
+    public void ResumeGameOrCheckOutcome()
+    {
+        if (AllQuizzesInteracted())
+        {
+            // This was the last quiz, check final outcome
+            CheckGameOutcome();
+        }
+        else
+        {
+            // More quizzes remain, resume game
+            ResumeGameAfterQuiz();
+        }
     }
 
 

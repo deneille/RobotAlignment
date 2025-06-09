@@ -283,6 +283,8 @@ public class EnemyRobot : MonoBehaviour, IInteractable
                     {
                         Debug.Log("Obstacle destroyed after two hits.");
                         Destroy(targetCollider.gameObject);
+                        GameManager.Instance.CheckObstaclesAndForceLose();
+
                     }
                     else
                     {
@@ -293,6 +295,7 @@ public class EnemyRobot : MonoBehaviour, IInteractable
                 {
                     Destroy(targetCollider.gameObject);
                     Debug.Log("Obstacle destroyed (no inventory component).");
+                    GameManager.Instance.CheckObstaclesAndForceLose();
                 }
             }
             else
